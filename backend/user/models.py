@@ -24,7 +24,7 @@ class Users(AbstractUser):
         'Логин',
         max_length=SLUG_LENGTH,
         unique=True,
-        validators=(UnicodeUsernameValidator())
+        validators=(UnicodeUsernameValidator(),)
     )
     email = models.EmailField(
         'Почта',
@@ -36,7 +36,7 @@ class Users(AbstractUser):
         blank=True,
         null=True,
         upload_to='user/avatar/'
-        )
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ('username', 'first_name', 'last_name', 'password')
@@ -62,7 +62,7 @@ class Follower(models.Model):
         related_name='follow_to',
         verbose_name='follow to',
     )
-    updated_at = None
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ('-created_at',)

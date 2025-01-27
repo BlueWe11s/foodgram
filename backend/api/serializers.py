@@ -2,9 +2,9 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
+from drf_extra_fields.fields import Base64ImageField
 
-from api.fields import Base64ImageField
-from recipes.models import Tag, Ingredient, Recipe, RecipeIngredient
+from recipes.models import Tags, Ingredient, Recipe, RecipeIngredient
 from user.serializers import UserSerializer
 from user.models import Follower
 
@@ -28,7 +28,7 @@ class FavouriteAndShoppingCrtSerializer(serializers.ModelSerializer):
 class TagSerializer(serializers.ModelSerializer):
     """Сериализация тегов."""
     class Meta:
-        model = Tag
+        model = Tags
         fields = ('id', 'name', 'slug')
 
 

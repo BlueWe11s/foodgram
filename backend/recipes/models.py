@@ -1,11 +1,16 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import UniqueConstraint
 
-from user.models import Users
-from recipes.constants import NAME_LENGTH, SLUG_LENGTH, SI_LENGTH, MIN_COOKING_TIME
+from recipes.constants import (
+    NAME_LENGTH,
+    SLUG_LENGTH,
+    SI_LENGTH,
+    MIN_COOKING_TIME
+)
 
-User = Users
+User = get_user_model()
 
 
 class Tags(models.Model):
@@ -40,7 +45,10 @@ class Ingredient(models.Model):
     Модель ингредиентов
     '''
     name = models.CharField('Наименование', max_length=NAME_LENGTH)
-    measurement_unit = models.CharField('Единица измерения', max_length=SI_LENGTH)
+    measurement_unit = models.CharField(
+        'Единица измерения',
+        max_length=SI_LENGTH
+    )
 
     class Meta:
         ordering = ('name',)
@@ -48,8 +56,8 @@ class Ingredient(models.Model):
         verbose_name_plural = 'Ингредиенты'
         constraints = [
             UniqueConstraint(
-                fields=['user', 'measurement_unit'],
-                name = 'unique_name_measurement'
+                fields=['name', 'measurement_unit'],
+                name='unique_name_measurement'
             )
         ]
 
@@ -66,7 +74,7 @@ class Recipe(models.Model):
         User,
         on_delete=models.CASCADE,
         verbose_name='Автор рецепта'
-        )
+    )
     name = models.CharField(
         'Наименование',
         max_length=NAME_LENGTH
@@ -76,22 +84,20 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(
         Ingredient,
         verbose_name='Ингридиенты',
-        related_name='recipes'
     )
     tags = models.ManyToManyField(
         Tags,
         verbose_name='Список тегов',
-        related_name='recipes'
     )
-    cooking_time = models.models.PositiveSmallIntegerField(
+    cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления рецепта',
         validators=[MinValueValidator(MIN_COOKING_TIME)]
-        )
+    )
     slug = models.SlugField(
         'Уникальный идентификатор',
         max_length=SLUG_LENGTH,
         unique=True
-        )
+    )
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации',
         auto_now_add=True
@@ -102,6 +108,7 @@ class Recipe(models.Model):
         ordering = ('-created_at',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
+        default_related_name = 'recipes'
 
     def __str__(self):
         return self.name
@@ -149,8 +156,8 @@ class ShoppingCart(models.Model):
     )
     recipe = models.ForeignKey(
         Recipe,
-        verbose_name='Рецепт'
-        on_delete=models.CASCADE,
+        verbose_name='Рецепт',
+        on_delete=models.CASCADE
     )
 
     class Meta:

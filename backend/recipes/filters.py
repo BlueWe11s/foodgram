@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 
-from recipes.models import Tag, User
+from recipes.models import Tags, User
 
 
 class RecipeFilter(filters.FilterSet):
@@ -13,7 +13,7 @@ class RecipeFilter(filters.FilterSet):
         queryset=User.objects.all(),
     )
     tags = filters.filters.ModelMultipleChoiceFilter(
-        queryset=Tag.objects.all(),
+        queryset=Tags.objects.all(),
         field_name='tags__slug',
         to_field_name='slug',
     )
@@ -21,10 +21,10 @@ class RecipeFilter(filters.FilterSet):
     is_in_shopping_cart = filters.BooleanFilter(method='shoppingcart_filter')
 
     def favorited_filter(self, queryset, name, value):
-            user = self.request.user
-            if value is True and user.is_authenticated:
-                return queryset.filter(in_favoriterecipe__user_id=user.id)
-            return queryset
+        user = self.request.user
+        if value is True and user.is_authenticated:
+            return queryset.filter(in_favoriterecipe__user_id=user.id)
+        return queryset
 
     def shoppingcart_filter(self, queryset, name, value):
         user = self.request.user
