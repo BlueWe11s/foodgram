@@ -9,7 +9,9 @@ User = get_user_model()
 
 
 class UserSerializer(DjoserUserSerializer):
-    '''Сериализатор для модели пользователя'''
+    '''
+    Сериализатор для пользователя
+    '''
 
     is_subscribed = serializers.SerializerMethodField()
 
@@ -27,7 +29,9 @@ class UserSerializer(DjoserUserSerializer):
         
 
 class FollowToSerializer(UserSerializer):
-    """Serializer for User model on follow page."""
+    '''
+    Сериализатор для подписчиков
+    '''
 
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
@@ -57,7 +61,9 @@ class FollowToSerializer(UserSerializer):
 
 
 class FollowSerializer(serializers.ModelSerializer):
-    """Serializer for Follow model."""
+    '''
+    Сериализатор для подписчиков
+    '''
 
     follower = serializers.HiddenField(
         default=serializers.CurrentUserDefault(),

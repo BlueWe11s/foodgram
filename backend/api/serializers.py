@@ -1,18 +1,21 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from drf_extra_fields.fields import Base64ImageField
 
-from recipes.models import Tags, Ingredient, Recipe, RecipeIngredient
+from recipes.models import Tags, Ingredient, Recipe
 from user.serializers import UserSerializer
 from user.models import Follower
+from api.mixins import RecipeActionMixin
 
 User = get_user_model()
 
 
 class FavouriteAndShoppingCrtSerializer(serializers.ModelSerializer):
-    """Сериализация избранного и покупок."""
+    '''
+    Сериализатор избранного и корзины
+    '''
+
     image = Base64ImageField()
 
     class Meta:
@@ -26,20 +29,29 @@ class FavouriteAndShoppingCrtSerializer(serializers.ModelSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
-    """Сериализация тегов."""
+    '''
+    Сериализатор тегов
+    '''
+
     class Meta:
         model = Tags
         fields = ('id', 'name', 'slug')
 
 
 class RecipeTagSerializer(serializers.ModelSerializer):
-    """Сериализация тегов в рецептах."""
+    '''
+    Сериализатор тегов в рецептах
+    '''
+
     class Meta:
         fields = '__all__'
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    """Сериализация ингредиентов в рецептах."""
+    '''
+    Сериализатор ингредиентов
+    '''
+
     id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
@@ -52,7 +64,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
 
-        model = RecipeIngredient
+        model = Recipe
         fields = (
             'id',
             'name',
@@ -62,7 +74,9 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 
 class CreateIngredientInRecipeSerializer(serializers.ModelSerializer):
-    """Создания ингредиента в рецепте."""
+    '''
+    Сериализатор создание ингредиентов
+    '''
 
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(),
@@ -74,7 +88,7 @@ class CreateIngredientInRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
 
-        model = RecipeIngredient
+        model = Recipe
         fields = (
             'id',
             'amount',
@@ -82,7 +96,10 @@ class CreateIngredientInRecipeSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    """Сериализация ингредиентов."""
+    '''
+    Сериализатор ингредиентов
+    '''
+
     amount = RecipeIngredientSerializer(read_only=True)
 
     class Meta:
@@ -91,7 +108,10 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    """Сериализация рецептов для записи."""
+    '''
+    Сериализатор рецептов
+    '''
+
     ingredients = CreateIngredientInRecipeSerializer(
         many=True, source='recipe_ingredients', required=True)
     tags = serializers.PrimaryKeyRelatedField(
@@ -111,8 +131,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('recipe_ingredients', [])
         tags = validated_data.pop('tags', [])
         recipe.tags.set(tags)
-        RecipeIngredient.objects.bulk_create(
-            RecipeIngredient(
+        Recipe.objects.bulk_create(
+            Recipe(
                 recipe=recipe,
                 ingredient=ingredient.get('ingredient'),
                 amount=ingredient.get('amount'),
@@ -182,7 +202,10 @@ class RecipeSerializer(serializers.ModelSerializer):
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):
-    """Сериализация рецептов для чтения."""
+    '''
+    Сериализатор рецептов для чтения
+    '''
+
     ingredients = RecipeIngredientSerializer(
         source='recipe_ingredients',
         many=True,
@@ -219,7 +242,9 @@ class RecipeReadSerializer(serializers.ModelSerializer):
 
 
 class SubscribeSerializer(serializers.ModelSerializer):
-    """Сериализация подписок."""
+    '''
+    Сериализатор подписок
+    '''
 
     class Meta:
         model = Follower
@@ -248,7 +273,10 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
 
 class SubscribingSerializer(serializers.ModelSerializer):
-    """Сериализация подписчика."""
+    '''
+    Сериализатор подписчиков
+    '''
+
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.ReadOnlyField(source='recipes.count')
@@ -280,43 +308,10 @@ class SubscribingSerializer(serializers.ModelSerializer):
         ).data
 
 
-class BaseRecipeActionSerializer(serializers.ModelSerializer):
-    """Базовый сериализатор для избранного и корзины покупок."""
-
-    class Meta:
-        model = Recipe
-        fields = ('id',)
-
-    def validate(self, data):
-        user = self.context['request'].user
-        pk = self.context['id']
-        recipe = get_object_or_404(Recipe, id=pk)
-
-        if self._is_already_added(user, recipe):
-            raise serializers.ValidationError(self.already_added_message)
-
-        return data
-
-    def create(self, validated_data):
-        user = self.context['request'].user
-        pk = self.context['id']
-        recipe = get_object_or_404(Recipe, id=pk)
-        action_item = self._add_to_user_collection(user, recipe)
-        return action_item.recipe
-
-    def delete(self, user):
-        pk = self.context['id']
-        recipe = get_object_or_404(Recipe, id=pk)
-        action_item = self._get_from_user_collection(user, recipe)
-
-        if not action_item:
-            raise serializers.ValidationError(self.already_removed_message)
-
-        action_item.delete()
-
-
-class FavouriteSerializer(BaseRecipeActionSerializer):
-    """Сериализация избранного."""
+class FavouriteSerializer(RecipeActionMixin):
+    '''
+    Сериализатор избранного
+    '''
 
     already_added_message = 'Рецепт уже был добавлен в избранное.'
     already_removed_message = 'Рецепт уже был удалён из избранного.'
@@ -331,8 +326,10 @@ class FavouriteSerializer(BaseRecipeActionSerializer):
         return user.favorites.filter(recipe=recipe).first()
 
 
-class ShoppingCartSerializer(BaseRecipeActionSerializer):
-    """Сериализация корзины покупок."""
+class ShoppingCartSerializer(RecipeActionMixin):
+    '''
+    Серилизатор корзины
+    '''
 
     already_added_message = 'Рецепт уже был добавлен в корзину.'
     already_removed_message = 'Рецепт уже был удалён из корзины.'
