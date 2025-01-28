@@ -1,9 +1,13 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from djoser.serializers import UserSerializer as DjoserUserSerializer
+from django.db import IntegrityError
 from rest_framework import serializers
 
 from recipes.serializers import RecipeSerializer
+from user.validator import validate_username
 from user.models import Follow
+from recipes.constants import NAME_LENGTH
 
 User = get_user_model()
 
@@ -86,3 +90,27 @@ class FollowSerializer(serializers.ModelSerializer):
                 'You cannot follow to yourself.',
             )
         return attrs
+
+
+class AuthSerializer(serializers.Serializer):
+    '''
+    Сериализатор для обработки запроса на получени кода подтверждения
+    '''
+    email = serializers.EmailField(required=True, max_length=NAME_LENGTH)
+    password = serializers.CharField()
+
+
+    def validate(self, data):
+        User.objects.get(
+            password=data.get('password'),
+            email=data.get('email')
+        )
+        return data
+
+
+class TokenSerializer(serializers.Serializer):
+    """
+    Сериализатор для обработки
+    """
+    username = serializers.CharField()
+    confirmation_code = serializers.CharField()
