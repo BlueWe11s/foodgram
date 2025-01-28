@@ -26,7 +26,7 @@ class UserSerializer(DjoserUserSerializer):
             if user.is_anonymous:
                 return False
             return obj.follow_to.filter(follower=user).exists()
-        
+
 
 class FollowToSerializer(UserSerializer):
     '''
