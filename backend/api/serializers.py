@@ -11,7 +11,7 @@ from api.mixins import RecipeActionMixin
 User = get_user_model()
 
 
-class FavouriteAndShoppingCrtSerializer(serializers.ModelSerializer):
+class FavouriteAndShoppingCartSerializer(serializers.ModelSerializer):
     '''
     Сериализатор избранного и корзины
     '''
@@ -63,7 +63,6 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
         })
 
     class Meta:
-
         model = Recipe
         fields = (
             'id',
@@ -82,7 +81,7 @@ class CreateIngredientInRecipeSerializer(serializers.ModelSerializer):
         queryset=Ingredient.objects.all(),
         source='ingredient',
         error_messages={
-            'does_not_exist': 'Такого ингредиента нет.'
+            'does_not_exist': 'Такого ингредиента не существует'
         }
     )
 
@@ -113,10 +112,14 @@ class RecipeSerializer(serializers.ModelSerializer):
     '''
 
     ingredients = CreateIngredientInRecipeSerializer(
-        many=True, source='recipe_ingredients', required=True)
+        many=True, source='recipes', required=True
+    )
     tags = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Tag.objects.all(), required=True)
-    image = Base64ImageField(required=True, allow_null=True)
+        many=True, queryset=Tags.objects.all(), required=True
+    )
+    image = Base64ImageField(
+        required=True, allow_null=True
+    )
     author = UserSerializer(required=False)
 
     class Meta:
@@ -127,15 +130,14 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
 
     @staticmethod
-    def _set_ingredients_and_tags(validated_data, recipe):
-        ingredients = validated_data.pop('recipe_ingredients', [])
+    def _set_ingredients_and_tags_(validated_data, recipe):
+        ingredients = validated_data.pop('recipes', [])
         tags = validated_data.pop('tags', [])
         recipe.tags.set(tags)
         Recipe.objects.bulk_create(
             Recipe(
                 recipe=recipe,
                 ingredient=ingredient.get('ingredient'),
-                amount=ingredient.get('amount'),
             ) for ingredient in ingredients
         )
 
@@ -166,36 +168,36 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def validate(self, value):
         tags = value.get('tags')
-        ingredients = value.get('recipe_ingredients')
+        ingredients = value.get('recipes')
 
         if not tags:
-            raise serializers.ValidationError('Необходимо выбрать теги.')
+            raise serializers.ValidationError('Нужно выбрать теги')
         if not ingredients:
             raise serializers.ValidationError(
-                'Нужно выбрать ингредиенты.')
+                'Нужно выбрать ингредиенты')
 
         return value
 
     def validate_tags(self, value):
 
         if len(value) != len(set(value)):
-            raise serializers.ValidationError('Теги не могут повторяться.')
+            raise serializers.ValidationError('Теги не могут повторяться')
         if len(value) < 1:
-            raise serializers.ValidationError('Добавьте теги.')
+            raise serializers.ValidationError('Добавьте теги')
         return value
 
     def validate_ingredients(self, value):
         ingredient_set = set()
 
         if len(value) < 1:
-            raise serializers.ValidationError('Добавьте ингредиенты.')
+            raise serializers.ValidationError('Добавьте ингредиенты')
 
         for item in value:
             item_tuple = tuple(sorted(item.items()))
 
             if item_tuple in ingredient_set:
                 raise serializers.ValidationError(
-                    'Ингредиенты не могут повторяться.')
+                    'Ингредиенты не могут повторяться')
             ingredient_set.add(item_tuple)
 
         return value
@@ -207,7 +209,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     '''
 
     ingredients = RecipeIngredientSerializer(
-        source='recipe_ingredients',
+        source='recipes',
         many=True,
         read_only=True,
     )
@@ -253,7 +255,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
             UniqueTogetherValidator(
                 fields=('user', 'subscribing'),
                 queryset=model.objects.all(),
-                message='Вы уже подписаны на этого пользователя.',
+                message='Вы уже подписаны на этого пользователя',
             )
         ]
 
@@ -261,7 +263,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
         if self.context.get('request').user == data:
             raise serializers.ValidationError(
-                'Вы не можете подписаться сами на себя.'
+                'Вы не можете подписаться сами на себя'
             )
         return data
 
@@ -301,7 +303,7 @@ class SubscribingSerializer(serializers.ModelSerializer):
                 queryset = queryset[:int(limit)]
             except (TypeError, ValueError):
                 pass
-        return FavouriteAndShoppingCrtSerializer(
+        return FavouriteAndShoppingCartSerializer(
             queryset,
             many=True,
             context={'request': request},
@@ -313,16 +315,16 @@ class FavouriteSerializer(RecipeActionMixin):
     Сериализатор избранного
     '''
 
-    already_added_message = 'Рецепт уже был добавлен в избранное.'
-    already_removed_message = 'Рецепт уже был удалён из избранного.'
+    added_message = 'Рецепт уже был добавлен в избранное'
+    removed_message = 'Рецепт уже был удалён из избранного'
 
-    def _is_already_added(self, user, recipe):
+    def is_added(self, user, recipe):
         return recipe.favorites.filter(user=user).exists()
 
-    def _add_to_user_collection(self, user, recipe):
+    def add_to_user_collection(self, user, recipe):
         return user.favorites.create(recipe=recipe)
 
-    def _get_from_user_collection(self, user, recipe):
+    def get_from_user_collection(self, user, recipe):
         return user.favorites.filter(recipe=recipe).first()
 
 
@@ -331,14 +333,14 @@ class ShoppingCartSerializer(RecipeActionMixin):
     Серилизатор корзины
     '''
 
-    already_added_message = 'Рецепт уже был добавлен в корзину.'
-    already_removed_message = 'Рецепт уже был удалён из корзины.'
+    added_message = 'Рецепт уже был добавлен в корзину'
+    removed_message = 'Рецепт уже был удалён из корзины'
 
-    def _is_already_added(self, user, recipe):
+    def is_added(self, user, recipe):
         return recipe.shopping_carts.filter(user=user).exists()
 
-    def _add_to_user_collection(self, user, recipe):
+    def add_to_user_collection(self, user, recipe):
         return user.shopping_carts.create(recipe=recipe)
 
-    def _get_from_user_collection(self, user, recipe):
+    def get_from_user_collection(self, user, recipe):
         return user.shopping_carts.filter(recipe=recipe).first()

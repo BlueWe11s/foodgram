@@ -18,7 +18,7 @@ class RecipeActionMixin(serializers.ModelSerializer):
         pk = self.context['id']
         recipe = get_object_or_404(Recipe, id=pk)
 
-        if self._is_already_added(user, recipe):
+        if self.already_added(user, recipe):
             raise serializers.ValidationError(self.already_added_message)
 
         return data
@@ -36,6 +36,6 @@ class RecipeActionMixin(serializers.ModelSerializer):
         action_item = self._get_from_user_collection(user, recipe)
 
         if not action_item:
-            raise serializers.ValidationError(self.already_removed_message)
+            raise serializers.ValidationError(self.removed_message)
 
         action_item.delete()
