@@ -6,7 +6,7 @@ from recipes.models import Recipe
 
 class RecipeActionMixin(serializers.ModelSerializer):
     '''
-    Сериализатор избранного и корзины
+    Миксин использующийся в сериализаторе избранного и корзины
     '''
 
     class Meta:
@@ -18,8 +18,8 @@ class RecipeActionMixin(serializers.ModelSerializer):
         pk = self.context['id']
         recipe = get_object_or_404(Recipe, id=pk)
 
-        if self.already_added(user, recipe):
-            raise serializers.ValidationError(self.already_added_message)
+        if self.added(user, recipe):
+            raise serializers.ValidationError(self.added_message)
 
         return data
 

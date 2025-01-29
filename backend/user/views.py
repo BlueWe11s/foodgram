@@ -1,111 +1,105 @@
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, permissions, status, viewsets
+from djoser.views import UserViewSet
+from rest_framework import permissions, status
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework_simplejwt.views import TokenObtainPairView
 
-from recipes.permissions import (IsAdminOnly)
-from user.serializers import (AuthSerializer,
-                              TokenSerializer,
-                              UserSerializer)
-
-User = get_user_model()
+from api.serializers import SubscribeSerializer
+from user.models import Users, Follower
+from user.paginations import Pagination
+from user.serializers import UserAvatarSerializer, UserSerializer
 
 
-class UserSignupView(APIView):
-    '''
-    Регистрация нового пользователя
-    '''
-    permission_classes = (permissions.AllowAny,)
-
-    def post(self, request):
-        serializer = AuthSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = User.objects.get(
-            username=request.data.get('username'),
-            email=request.data.get('email')
-        )
-        confirmation_code = default_token_generator.make_token(user)
-        send_mail(
-            'Код подтверждения',
-            f'Ваш код - {confirmation_code}',
-            settings.SENDER_EMAIL,
-            [request.data.get('email')]
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class ObtainTokenView(TokenObtainPairView):
-    '''
-    Получение токена
-    '''
-    permission_classes = (permissions.AllowAny,)
-
-    def post(self, request):
-        serializer = TokenSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = get_object_or_404(
-            User, username=request.data.get('username')
-        )
-        if not default_token_generator.check_token(
-                user, request.data.get('confirmation_code')
-        ):
-            return Response(
-                'Неверный confirmation_code',
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        token = {'token': str(AccessToken.for_user(user))}
-        return Response(token, status=status.HTTP_200_OK)
-
-
-class UserViewSet(viewsets.ModelViewSet):
-    '''
-    Работа с пользователями
-    '''
+class UserViewSet(UserViewSet):
+    queryset = Users.objects.all()
     serializer_class = UserSerializer
-    queryset = User.objects.order_by('pk')
-    permission_classes = (IsAdminOnly,)
-    lookup_field = 'username'
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('=username',)
-    pagination_class = PageNumberPagination
-    http_method_names = ['get', 'delete', 'post', 'patch']
+    permission_classes = [permissions.AllowAny]
+    pagination_class = Pagination
 
     @action(
-        methods=['GET'], detail=False, url_path='me',
-        permission_classes=(permissions.IsAuthenticated,)
+        methods=['get'], detail=False,
+        url_path='me', permission_classes=[permissions.IsAuthenticated]
     )
-    def get_update_me(self, request):
-        serializer = self.get_serializer(
-            request.user,
-            data=request.data,
-            partial=True
+    def get_me(self, request):
+        user = request.user
+        user_me = get_object_or_404(Users, id=user.id)
+        serializer = UserSerializer(user_me)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        methods=['post'], detail=True,
+        url_path='subscribe',
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def post_subscribe(self, request, **kwargs):
+        user = request.user
+        following = get_object_or_404(Users, pk=self.kwargs.get('id'))
+        serializer = SubscribeSerializer(
+            data={
+                'user': user.id,
+                'subscribing': following.id,
+            },
+            context={'request': request},
         )
-        if serializer.is_valid(raise_exception=True):
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @post_subscribe.mapping.delete
+    def delete_subscribe(self, request, *args, **kwargs):
+        following = get_object_or_404(Users, pk=self.kwargs.get('id'))
+        follow = Follower.get_object_or_404(
+            user=request.user, subscribing=following)
+        if follow:
+            follow.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
-            serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            {'error': 'Вы не подписаны на этого пользователя.'},
+            status=status.HTTP_400_BAD_REQUEST
         )
 
-    @get_update_me.mapping.patch
-    def patch_me(self, request):
-        serializer = self.get_serializer(
-            request.user,
-            data=request.data,
-            partial=True
+    @action(
+        methods=['get'], detail=False, 
+        url_path='subscriptions',
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def get_subscriptions(self, request):
+        user_subscriptions = Follower.get_object_or_404(
+            user=self.request.user
         )
-        if serializer.is_valid(raise_exception=True):
-            serializer.validated_data.pop('role', None)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        paginator = self.paginate_queryset(user_subscriptions)
+        serializer = SubscribeSerializer(
+            paginator,
+            context={'request': request},
+            many=True
+        )
+        return self.get_paginated_response(serializer.data)
+
+    @action(
+        detail=False, methods=['put'],
+        url_path='me/avatar',
+        permission_classes=[permissions.IsAuthenticated]
+    )
+    def put_avatar(self, request):
+        user = request.user
+
+        serializer = UserAvatarSerializer(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @put_avatar.mapping.delete
+    def delete_avatar(self, request):
+        user = request.user
+        if user.avatar:
+            user.avatar.delete(save=False)
+            user.avatar = None
+            user.save()
+            return Response(
+                {'status': 'Аватар удален.'},
+                status=status.HTTP_204_NO_CONTENT
+            )
         return Response(
-            serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            {'errors': 'Такого объекта не существует.'},
+            status=status.HTTP_404_NOT_FOUND
         )

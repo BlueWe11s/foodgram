@@ -143,7 +143,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         recipe = Recipe.objects.create(
-            author=self.context.get('request').user,
+            author=self.context['request'].user,
             image=validated_data.pop('image'),
             name=validated_data.pop('name'),
             text=validated_data.pop('text'),
@@ -227,8 +227,11 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         )
 
     def get_user(self):
-        request = self.context.get('request')
-        return request.user if request else None
+        request = self.context['request']
+        if request:
+            return request.user
+        else:
+            return None
 
     def get_is_favorited(self, obj):
         user = self.get_user()
@@ -261,7 +264,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def validate_subscribing(self, data):
 
-        if self.context.get('request').user == data:
+        if self.context['request'].user == data:
             raise serializers.ValidationError(
                 'Вы не можете подписаться сами на себя'
             )
@@ -295,7 +298,7 @@ class SubscribingSerializer(serializers.ModelSerializer):
             subscribing=obj).exists()
 
     def get_recipes(self, obj):
-        request = self.context.get('request')
+        request = self.context['request']
         queryset = obj.recipes.all()
         limit = request.query_params.get('recipes_limit')
         if limit:
@@ -318,7 +321,7 @@ class FavouriteSerializer(RecipeActionMixin):
     added_message = 'Рецепт уже был добавлен в избранное'
     removed_message = 'Рецепт уже был удалён из избранного'
 
-    def is_added(self, user, recipe):
+    def added(self, user, recipe):
         return recipe.favorites.filter(user=user).exists()
 
     def add_to_user_collection(self, user, recipe):
@@ -336,7 +339,7 @@ class ShoppingCartSerializer(RecipeActionMixin):
     added_message = 'Рецепт уже был добавлен в корзину'
     removed_message = 'Рецепт уже был удалён из корзины'
 
-    def is_added(self, user, recipe):
+    def added(self, user, recipe):
         return recipe.shopping_carts.filter(user=user).exists()
 
     def add_to_user_collection(self, user, recipe):
