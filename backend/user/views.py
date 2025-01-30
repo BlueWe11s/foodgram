@@ -10,7 +10,7 @@ from user.paginations import Pagination
 from user.serializers import UserAvatarSerializer, UserSerializer
 
 
-class UserViewSet(UserViewSet):
+class UsersViewSet(UserViewSet):
     queryset = Users.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
