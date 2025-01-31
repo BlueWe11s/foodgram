@@ -7,7 +7,8 @@ from recipes.constants import (
     NAME_LENGTH,
     SLUG_LENGTH,
     SI_LENGTH,
-    MIN_COOKING_TIME
+    MIN_COOKING_TIME,
+    MIN_AMOUNT
 )
 
 User = get_user_model()
@@ -167,3 +168,33 @@ class ShoppingCart(models.Model):
                 name='unique_shopping_cart_recipe',
             ),
         ]
+
+
+class RecipeIngredient(models.Model):
+    '''
+    Промежуточная модель рецептов и ингредиентов
+    '''
+    recipe = models.ForeignKey(
+        'Recipe',
+        blank=False,
+        null=False,
+        on_delete=models.CASCADE,
+        related_name='recipe_ingredients',
+    )
+    ingredient = models.ForeignKey(
+        Ingredient,
+        blank=False,
+        null=False,
+        on_delete=models.CASCADE,
+        related_name='recipe_ingredients',
+    )
+    amount = models.PositiveSmallIntegerField(
+        'Количество в рецепте',
+        validators=[
+            MinValueValidator(MIN_AMOUNT),
+        ]
+    )
+
+    class Meta:
+        verbose_name = 'Рецепт-ингредиент'
+        verbose_name_plural = 'Рецепты-ингредиенты'
