@@ -46,7 +46,7 @@ class Users(AbstractUser):
         verbose_name_plural = 'Пользователи'
 
 
-class Follower(models.Model):
+class Follow(models.Model):
     '''
     Модель фолловеров
     '''

@@ -4,8 +4,8 @@ from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from api.serializers import SubscribeSerializer
-from user.models import Users, Follower
+from user.serializers import SubscribeSerializer
+from user.models import Users, Follow
 from user.paginations import Pagination
 from user.serializers import UserAvatarSerializer, UserSerializer
 
@@ -48,7 +48,7 @@ class UsersViewSet(UserViewSet):
     @post_subscribe.mapping.delete
     def delete_subscribe(self, request, *args, **kwargs):
         following = get_object_or_404(Users, pk=self.kwargs.get('id'))
-        follow = Follower.get_object_or_404(
+        follow = Follow.get_object_or_404(
             user=request.user, subscribing=following)
         if follow:
             follow.delete()
@@ -64,7 +64,7 @@ class UsersViewSet(UserViewSet):
         permission_classes=[permissions.IsAuthenticated]
     )
     def get_subscriptions(self, request):
-        user_subscriptions = Follower.get_object_or_404(
+        user_subscriptions = Follow.get_object_or_404(
             user=self.request.user
         )
         paginator = self.paginate_queryset(user_subscriptions)
