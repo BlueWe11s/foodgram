@@ -8,8 +8,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from urlshortner.models import Url
 from urlshortner.utils import shorten_url
 
-from api.filters import IngredientFilter, RecipeFilter
-from recipes.permissions import AuthorOrReadOnly
+from api.filters import RecipeFilter
+from recipes.permissions import IsAuthor
 from api.serializers import (
     FavouriteAndShoppingCartSerializer,
     FavouriteSerializer,
@@ -30,7 +30,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
-    permission_classes = [AuthorOrReadOnly, IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthor, IsAuthenticatedOrReadOnly]
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -43,24 +43,26 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'], url_path='get-link',
             url_name='get-link', permission_classes=[AllowAny])
     def get_link(self, request, pk):
-        """Создает короткую ссылку для рецепта."""
+        '''
+        Создание короткой ссылки
+        '''
         main_domain = request.build_absolute_uri(
         ).replace(request.get_full_path(), '')
         url_route_to_recipe = main_domain + f'/recipes/{pk}/'
         short_url = Url.objects.filter(url=url_route_to_recipe).first()
         if short_url:
-            final_short_link = main_domain.replace(
+            short_link = main_domain.replace(
                 request.get_full_path(), ''
             ) + '/s/' + short_url.short_url + '/'
-            return Response({'short-link': final_short_link})
+            return Response({'short-link': short_link})
         url_route_to_recipe = shorten_url(
             url_route_to_recipe,
             is_permanent=False
         )
-        final_short_link = main_domain.replace(
+        short_link = main_domain.replace(
             request.get_full_path(), ''
         ) + '/s/' + url_route_to_recipe
-        return Response({'short-link': final_short_link})
+        return Response({'short-link': short_link})
 
 
 class FavoriteAndShoppingViewSet(viewsets.ModelViewSet):
@@ -68,23 +70,23 @@ class FavoriteAndShoppingViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
-    permission_classes = [AuthorOrReadOnly, IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthor, IsAuthenticatedOrReadOnly]
 
     @action(detail=True, methods=['post'], url_path='Favourite',
             permission_classes=[permissions.IsAuthenticated])
-    def Favourite_post(self, request, pk):
+    def post_favourite(self, request, pk):
         return self.add_item_to_list(request.user, pk, 'Favourite')
 
-    @Favourite_post.mapping.delete
-    def Favourite_delete(self, request, pk):
+    @post_favourite.mapping.delete
+    def favourite_delete(self, request, pk):
         return self.remove_item_from_list(request.user, pk, 'Favourite')
 
     @action(detail=True, methods=['post'], url_path='shopping_cart',
             permission_classes=[permissions.IsAuthenticated])
-    def shopping_cart_post(self, request, pk):
+    def post_shopping_cart(self, request, pk):
         return self.add_item_to_list(request.user, pk, 'shopping_cart')
 
-    @shopping_cart_post.mapping.delete
+    @post_shopping_cart.mapping.delete
     def shopping_cart_delete(self, request, pk):
         return self.remove_item_from_list(request.user, pk, 'shopping_cart')
 
@@ -106,9 +108,10 @@ class FavoriteAndShoppingViewSet(viewsets.ModelViewSet):
                 item_data = FavouriteAndShoppingCartSerializer(
                     shopping_cart_item).data
             return Response(item_data, status=status.HTTP_201_CREATED)
-        except serializers.ValidationError as e:
+        except serializers.ValidationError:
             return Response(
-                {'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST
+                {'error': str(serializers.ValidationError)},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
     def remove_item_from_list(self, user, pk, list_type):
@@ -164,10 +167,10 @@ class FavoriteAndShoppingViewSet(viewsets.ModelViewSet):
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tags.objects.all()
     serializer_class = TagSerializer
+    permission_classes = (AllowAny,)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_class = IngredientFilter
