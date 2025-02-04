@@ -5,8 +5,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from urlshortner.models import Url
-from urlshortner.utils import shorten_url
+# from urlshortner.models import Url
+# from urlshortner.utils import shorten_url
 
 from api.filters import RecipeFilter
 from recipes.permissions import IsAuthor
@@ -40,29 +40,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(detail=True, methods=['get'], url_path='get-link',
-            url_name='get-link', permission_classes=[AllowAny])
-    def get_link(self, request, pk):
-        '''
-        Создание короткой ссылки
-        '''
-        main_domain = request.build_absolute_uri(
-        ).replace(request.get_full_path(), '')
-        url_route_to_recipe = main_domain + f'/recipes/{pk}/'
-        short_url = Url.objects.filter(url=url_route_to_recipe).first()
-        if short_url:
-            short_link = main_domain.replace(
-                request.get_full_path(), ''
-            ) + '/s/' + short_url.short_url + '/'
-            return Response({'short-link': short_link})
-        url_route_to_recipe = shorten_url(
-            url_route_to_recipe,
-            is_permanent=False
-        )
-        short_link = main_domain.replace(
-            request.get_full_path(), ''
-        ) + '/s/' + url_route_to_recipe
-        return Response({'short-link': short_link})
+    @action(
+        detail=False,
+        methods=('PUT',),
+        permission_classes=(AllowAny,),
+        url_path='get-link',
+    )
+    def get_link(request):
+
+        serializer = RecipeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class FavoriteAndShoppingViewSet(viewsets.ModelViewSet):
