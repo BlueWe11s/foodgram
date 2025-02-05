@@ -61,6 +61,7 @@ class FavoriteAndShoppingViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = [IsAuthor, IsAuthenticatedOrReadOnly]
+    serializer_class = FavouriteAndShoppingCartSerializer
 
     @action(detail=True, methods=['post'], url_path='Favourite',
             permission_classes=[permissions.IsAuthenticated])

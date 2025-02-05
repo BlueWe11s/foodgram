@@ -21,8 +21,7 @@ class UsersViewSet(UserViewSet):
         url_path='me', permission_classes=[permissions.IsAuthenticated]
     )
     def get_me(self, request):
-        user = request.user
-        user_me = get_object_or_404(Users, id=user.id)
+        user_me = get_object_or_404(Users, id=request.user.id)
         serializer = UserSerializer(user_me)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -32,11 +31,10 @@ class UsersViewSet(UserViewSet):
         permission_classes=[permissions.IsAuthenticated]
     )
     def post_subscribe(self, request, **kwargs):
-        user = request.user
         following = get_object_or_404(Users, pk=self.kwargs.get('id'))
         serializer = SubscribeSerializer(
             data={
-                'user': user.id,
+                'user': request.user.id,
                 'subscribing': following.id,
             },
             context={'request': request},

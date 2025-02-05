@@ -21,13 +21,15 @@ class RecipeFilter(filters.FilterSet):
     is_in_shopping_cart = filters.BooleanFilter(method='shoppingcart_filter')
 
     def favorited_filter(self, queryset, name, value):
-        user = self.request.user
-        if value is True and user.is_authenticated:
-            return queryset.filter(in_favoriterecipe__user_id=user.id)
+        if value is True and self.request.user.is_authenticated:
+            return queryset.filter(
+                in_favoriterecipe__user_id=self.request.user.id
+            )
         return queryset
 
     def shoppingcart_filter(self, queryset, name, value):
-        user = self.request.user
-        if value is True and user.is_authenticated:
-            return queryset.filter(in_shoppingcart__user_id=user.id)
+        if value is True and self.request.user.is_authenticated:
+            return queryset.filter(
+                in_shoppingcart__user_id=self.request.user.id
+            )
         return queryset
