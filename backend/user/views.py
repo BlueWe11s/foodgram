@@ -7,7 +7,10 @@ from rest_framework.response import Response
 from api.serializers import SubscribeSerializer
 from user.models import Users, Follow
 from user.paginations import Pagination
-from user.serializers import UserAvatarSerializer, UserSerializer
+from user.serializers import (
+    UserAvatarSerializer,
+    UserSerializer,
+)
 
 
 class UsersViewSet(UserViewSet):
@@ -15,6 +18,12 @@ class UsersViewSet(UserViewSet):
     serializer_class = UserSerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = Pagination
+
+    def list(self, request, *args, **kwargs):
+        user_id = self.request.user.id
+        instance = self.get_queryset().get(id=user_id)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
     @action(
         methods=['get'], detail=False,

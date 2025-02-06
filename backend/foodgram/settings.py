@@ -3,7 +3,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -113,10 +113,10 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 5,
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+        'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ],
 }
 
@@ -125,12 +125,12 @@ SENDER_EMAIL = 'from@example.com'
 
 DJOSER = {
     'LOGIN_FIELD': 'email',
-    'PERMISSIONS': {
-        'user_list': ['rest_framework.permissions.AllowAny'],
-    },
+    # 'PERMISSIONS': {
+    #     'user_list': ['rest_framework.permissions.AllowAny'],
+    # },
     'HIDE_USERS': False,
-    'SERIALIZERS': {
-        "user": "api.serializers.UserSerializer",
-        "current_user": "api.serializers.UserSerializer",
-    },
+    # 'SERIALIZERS': {
+    #     "user": "api.serializers.UserSerializer",
+    #     "current_user": "api.serializers.UserSerializer",
+    # },
 }

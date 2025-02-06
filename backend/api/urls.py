@@ -5,7 +5,7 @@ from api.views import (
     IngredientViewSet,
     RecipeViewSet,
     TagViewSet,
-    FavoriteAndShoppingViewSet
+    FavoriteAndShoppingViewSet,
 )
 from user.views import UserViewSet
 
@@ -20,6 +20,7 @@ router.register(
     FavoriteAndShoppingViewSet,
     basename='list'
 )
+router.register
 
 urlpatterns = [
     path('', include(router.urls)),
