@@ -19,12 +19,6 @@ class UsersViewSet(UserViewSet):
     permission_classes = [permissions.AllowAny]
     pagination_class = Pagination
 
-    def list(self, request, *args, **kwargs):
-        user_id = self.request.user.id
-        instance = self.get_queryset().get(id=user_id)
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
-
     @action(
         methods=['get'], detail=False,
         url_path='me', permission_classes=[permissions.IsAuthenticated]
@@ -87,7 +81,7 @@ class UsersViewSet(UserViewSet):
         url_path='me/avatar',
         permission_classes=[permissions.IsAuthenticated]
     )
-    def put_avatar(self, request):
+    def get_avatar(self, request):
         user = request.user
 
         serializer = UserAvatarSerializer(user, data=request.data)
@@ -95,7 +89,7 @@ class UsersViewSet(UserViewSet):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @put_avatar.mapping.delete
+    @get_avatar.mapping.delete
     def delete_avatar(self, request):
         user = request.user
         if user.avatar:
