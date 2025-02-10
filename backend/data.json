@@ -1,0 +1,42 @@
+[
+    {
+      "model": "recipes.Tags",
+      "pk": 1,
+      "fields": {
+        "name": "tag1",
+        "slug": "slug1"
+      }
+    },
+    {
+        "model": "recipes.Tags",
+        "pk": 2,
+        "fields": {
+          "name": "tag2",
+          "slug": "slug2"
+        }
+      },
+      {
+        "model": "recipes.Tags",
+        "pk": 3,
+        "fields": {
+          "name": "tag3",
+          "slug": "slug3"
+        }
+      },
+      {
+        "model": "recipes.Ingredient",
+        "pk": 1,
+        "fields": {
+          "name": "ing1",
+          "measurement_unit": "mas1"
+        }
+      },
+      {
+        "model": "recipes.Ingredient",
+        "pk": 2,
+        "fields": {
+          "name": "ing2",
+          "measurement_unit": "mas2"
+        }
+      }
+  ]

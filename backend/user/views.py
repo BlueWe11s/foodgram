@@ -49,7 +49,7 @@ class UsersViewSet(UserViewSet):
     @post_subscribe.mapping.delete
     def delete_subscribe(self, request, *args, **kwargs):
         following = get_object_or_404(Users, pk=self.kwargs.get('id'))
-        follow = Follow.get_object_or_404(
+        follow = Follow.objects.filter(
             user=request.user, subscribing=following)
         if follow:
             follow.delete()
@@ -65,7 +65,7 @@ class UsersViewSet(UserViewSet):
         permission_classes=[permissions.IsAuthenticated]
     )
     def get_subscriptions(self, request):
-        user_subscriptions = Follow.get_object_or_404(
+        user_subscriptions = Follow.objects.filter(
             user=self.request.user
         )
         paginator = self.paginate_queryset(user_subscriptions)

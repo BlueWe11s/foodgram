@@ -17,12 +17,20 @@ class UserSerializer(DjoserUserSerializer):
     '''
     Сериализатор для пользователя
     '''
-    is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField(default=False)
 
     class Meta(DjoserUserSerializer.Meta):
         model = Users
-        fields = ('id', 'email', 'username', 'first_name',
-                  'last_name', 'avatar', 'is_subscribed')
+        fields = (
+            'id',
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'avatar',
+            'is_subscribed'
+        )
+        read_only_fields = ('id',)
 
     def validate_username(value):
         pattern = r'^[\w.@+-]+\Z'
@@ -39,20 +47,24 @@ class UserSerializer(DjoserUserSerializer):
         return value
 
     def get_is_subscribed(self, obj):
-        try:
-            return obj.is_subscribed
-        except AttributeError:
-            user = self.context['request'].user
-            if user.is_anonymous:
-                return False
-            return obj.follow_to.filter(follower=user).exists()
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.follow_to.filter(user=request.user).exists()
+        return False
 
 
-class UserAvatarSerializer(serializers.ModelSerializer):
+class UserAvatarSerializer(serializers.Serializer):
     '''
     Сериализатор аватара польтзователя
     '''
     avatar = Base64ImageField(required=True)
+
+    def update(self, instance, validated_data):
+        if not validated_data.get('avatar'):
+            raise serializers.ValidationError('Поле пусто')
+        instance.avatar = validated_data.get('avatar')
+        instance.save()
+        return instance
 
     class Meta:
         model = Users

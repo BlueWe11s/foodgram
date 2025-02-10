@@ -3,7 +3,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from user.constants import SLUG_LENGTH, EMAIL_LENGTH
+from user.constants import SLUG_LENGTH, EMAIL_LENGTH, AVATAR_LENGTH
 
 
 class Users(AbstractUser):
@@ -31,11 +31,13 @@ class Users(AbstractUser):
         max_length=EMAIL_LENGTH,
         unique=True,
     )
+    # avatar = models.CharField(max_length=AVATAR_LENGTH, blank=True)
     avatar = models.ImageField(
         'Аватар',
         blank=True,
         null=True,
-        upload_to='user/avatar/'
+        upload_to='user/avatar/',
+        default=''
     )
 
     USERNAME_FIELD = 'email'
@@ -63,10 +65,8 @@ class Follow(models.Model):
         related_name='follow_to',
         verbose_name='follow to',
     )
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ('-created_at',)
         constraints = [
             models.UniqueConstraint(
                 fields=['follower', 'follow_to'],

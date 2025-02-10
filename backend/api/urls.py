@@ -7,11 +7,11 @@ from api.views import (
     TagViewSet,
     FavoriteAndShoppingViewSet,
 )
-from user.views import UserViewSet
+from user.views import UsersViewSet
 
 
 router = DefaultRouter()
-router.register('users', UserViewSet, basename='users')
+router.register('users', UsersViewSet, basename='users')
 router.register('ingredients', IngredientViewSet, basename='ingredients')
 router.register('tags', TagViewSet, basename='tags')
 router.register('recipes', RecipeViewSet, basename='recipes')

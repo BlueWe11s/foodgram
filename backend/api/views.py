@@ -27,9 +27,9 @@ from user.views import Pagination
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
-    pagination_class = Pagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+    filterset_fields = ('author', 'tags')
     permission_classes = [IsAuthor, IsAuthenticatedOrReadOnly]
 
     def get_serializer_class(self):
