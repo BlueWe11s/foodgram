@@ -11,13 +11,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from api.filters import RecipeFilter
 from recipes.permissions import IsAuthor
 from api.serializers import (
-    FavouriteAndShoppingCartSerializer,
+    CartsSerializer,
     FavouriteSerializer,
-    IngredientSerializer,
+    IngredientsSerializer,
     RecipeReadSerializer,
     RecipeSerializer,
     ShoppingCartSerializer,
-    TagSerializer,
+    TagsSerializer,
 )
 from recipes.models import (
     Ingredient, Recipe, RecipeIngredient, Tags
@@ -30,6 +30,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     filterset_fields = ('author', 'tags')
+    pagination_class = Pagination
     permission_classes = [IsAuthor, IsAuthenticatedOrReadOnly]
 
     def get_serializer_class(self):
@@ -47,30 +48,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='get-link',
     )
     def get_link(request):
-
         serializer = RecipeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-class FavoriteAndShoppingViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
-    pagination_class = Pagination
-    filter_backends = (DjangoFilterBackend,)
-    filterset_class = RecipeFilter
-    permission_classes = [IsAuthor, IsAuthenticatedOrReadOnly]
-    serializer_class = FavouriteAndShoppingCartSerializer
-
-    @action(detail=True, methods=['post'], url_path='Favourite',
+    @action(detail=True, methods=['post'], url_path='favorite',
             permission_classes=[permissions.IsAuthenticated])
     def post_favourite(self, request, pk):
-        return self.add_item_to_list(request.user, pk, 'Favourite')
+        return self.add_item_to_list(request.user, pk, 'favorite')
 
     @post_favourite.mapping.delete
     def favourite_delete(self, request, pk):
-        return self.remove_item_from_list(request.user, pk, 'Favourite')
+        return self.remove_item_from_list(request.user, pk, 'favorite')
 
     @action(detail=True, methods=['post'], url_path='shopping_cart',
             permission_classes=[permissions.IsAuthenticated])
@@ -83,12 +74,12 @@ class FavoriteAndShoppingViewSet(viewsets.ModelViewSet):
 
     def add_item_to_list(self, user, pk, list_type):
         try:
-            if list_type == 'Favourite':
+            if list_type == 'favorite':
                 serializer = FavouriteSerializer(
                     data={}, context={'request': self.request, 'id': pk})
                 serializer.is_valid(raise_exception=True)
                 favourite_item = serializer.create(serializer.validated_data)
-                item_data = FavouriteAndShoppingCartSerializer(
+                item_data = CartsSerializer(
                     favourite_item).data
             elif list_type == 'shopping_cart':
                 serializer = ShoppingCartSerializer(
@@ -96,7 +87,7 @@ class FavoriteAndShoppingViewSet(viewsets.ModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 shopping_cart_item = serializer.create(
                     serializer.validated_data)
-                item_data = FavouriteAndShoppingCartSerializer(
+                item_data = CartsSerializer(
                     shopping_cart_item).data
             return Response(item_data, status=status.HTTP_201_CREATED)
         except serializers.ValidationError:
@@ -116,9 +107,10 @@ class FavoriteAndShoppingViewSet(viewsets.ModelViewSet):
                     context={'request': self.request, 'id': pk})
                 serializer.delete(user)
             return Response(status=status.HTTP_204_NO_CONTENT)
-        except serializers.ValidationError as e:
+        except serializers.ValidationError:
             return Response(
-                {'errors': str(e)}, status=status.HTTP_400_BAD_REQUEST
+                {'errors': 'ValidationError'},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
     @action(
@@ -126,7 +118,7 @@ class FavoriteAndShoppingViewSet(viewsets.ModelViewSet):
         url_path='download_shopping_cart',
         permission_classes=[permissions.IsAuthenticated]
     )
-    def download_shopping_cart(self, request):
+    def get_download_shopping_cart(self, request):
         ingredients = (
             RecipeIngredient.objects
             .filter(recipe__shopping_carts__user=request.user)
@@ -157,13 +149,13 @@ class FavoriteAndShoppingViewSet(viewsets.ModelViewSet):
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tags.objects.all()
-    serializer_class = TagSerializer
+    serializer_class = TagsSerializer
     permission_classes = (AllowAny,)
     pagination_class = None
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
-    serializer_class = IngredientSerializer
+    serializer_class = IngredientsSerializer
     filter_backends = (DjangoFilterBackend,)
     pagination_class = None

@@ -28,7 +28,7 @@ class UserSerializer(DjoserUserSerializer):
             'first_name',
             'last_name',
             'avatar',
-            'is_subscribed'
+            'is_subscribed',
         )
         read_only_fields = ('id',)
 

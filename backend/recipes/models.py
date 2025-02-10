@@ -66,6 +66,36 @@ class Ingredient(models.Model):
         return self.name
 
 
+class RecipeIngredient(models.Model):
+    '''
+    Промежуточная модель рецептов и ингредиентов
+    '''
+    recipe = models.ForeignKey(
+        'Recipe',
+        blank=False,
+        null=False,
+        on_delete=models.CASCADE,
+        related_name='recipe_ingredients',
+    )
+    ingredient = models.ForeignKey(
+        Ingredient,
+        blank=False,
+        null=False,
+        on_delete=models.CASCADE,
+        related_name='recipe_ingredients',
+    )
+    amount = models.PositiveSmallIntegerField(
+        'Количество в рецепте',
+        validators=[
+            MinValueValidator(MIN_AMOUNT),
+        ]
+    )
+
+    class Meta:
+        verbose_name = 'Рецепт-ингредиент'
+        verbose_name_plural = 'Рецепты-ингредиенты'
+
+
 class Recipe(models.Model):
     '''
     Модель рецептов
@@ -83,7 +113,7 @@ class Recipe(models.Model):
     image = models.ImageField('Изображение')
     text = models.TextField('Описание')
     ingredients = models.ManyToManyField(
-        Ingredient,
+        RecipeIngredient,
         verbose_name='Ингридиенты',
     )
     tags = models.ManyToManyField(
@@ -169,32 +199,3 @@ class ShoppingCart(models.Model):
             ),
         ]
 
-
-class RecipeIngredient(models.Model):
-    '''
-    Промежуточная модель рецептов и ингредиентов
-    '''
-    recipe = models.ForeignKey(
-        'Recipe',
-        blank=False,
-        null=False,
-        on_delete=models.CASCADE,
-        related_name='recipe_ingredients',
-    )
-    ingredient = models.ForeignKey(
-        Ingredient,
-        blank=False,
-        null=False,
-        on_delete=models.CASCADE,
-        related_name='recipe_ingredients',
-    )
-    amount = models.PositiveSmallIntegerField(
-        'Количество в рецепте',
-        validators=[
-            MinValueValidator(MIN_AMOUNT),
-        ]
-    )
-
-    class Meta:
-        verbose_name = 'Рецепт-ингредиент'
-        verbose_name_plural = 'Рецепты-ингредиенты'

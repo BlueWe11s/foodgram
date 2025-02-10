@@ -3,13 +3,20 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from user.constants import SLUG_LENGTH, EMAIL_LENGTH, AVATAR_LENGTH
+from user.constants import SLUG_LENGTH, EMAIL_LENGTH
 
 
 class Users(AbstractUser):
     '''
     Модель Пользователей
     '''
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = (
+        'username',
+        'first_name',
+        'last_name',
+        'password',
+    )
     first_name = models.CharField(
         'Имя',
         max_length=SLUG_LENGTH,
@@ -53,11 +60,9 @@ class Follow(models.Model):
     '''
     Модель фолловеров
     '''
-    follower = models.ForeignKey(
+    user = models.ForeignKey(
         Users,
         on_delete=models.CASCADE,
-        related_name='follower',
-        verbose_name='follower',
     )
     follow_to = models.ForeignKey(
         Users,
@@ -67,20 +72,14 @@ class Follow(models.Model):
     )
 
     class Meta:
+        verbose_name = 'Подписки'
+        verbose_name_plural = 'Подписки'
         constraints = [
             models.UniqueConstraint(
-                fields=['follower', 'follow_to'],
+                fields=['user', 'follow_to'],
                 name='unique_follow',
             ),
         ]
-        verbose_name = 'Подписки'
-        verbose_name_plural = 'Подписки'
-
-    def clean(self):
-        if self.follower == self.follow_to:
-            raise ValidationError(
-                {'follow_to': 'You cannot follow to yourself.'}
-            )
 
     def __str__(self):
-        return f'{self.follower} подписан на {self.follow_to}'
+        return f'{self.user} подписан на {self.follow_to}'

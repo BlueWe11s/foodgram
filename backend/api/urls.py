@@ -5,7 +5,6 @@ from api.views import (
     IngredientViewSet,
     RecipeViewSet,
     TagViewSet,
-    FavoriteAndShoppingViewSet,
 )
 from user.views import UsersViewSet
 
@@ -15,11 +14,7 @@ router.register('users', UsersViewSet, basename='users')
 router.register('ingredients', IngredientViewSet, basename='ingredients')
 router.register('tags', TagViewSet, basename='tags')
 router.register('recipes', RecipeViewSet, basename='recipes')
-router.register(
-    'Favourite and shop cart',
-    FavoriteAndShoppingViewSet,
-    basename='list'
-)
+
 router.register
 
 urlpatterns = [

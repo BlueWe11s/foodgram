@@ -20,7 +20,7 @@ class UserAdmin(BaseUserAdmin):
 
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = (
-        'follower',
+        'user',
         'follow_to'
     )
 

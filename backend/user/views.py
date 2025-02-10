@@ -4,8 +4,8 @@ from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from user.models import Follow, Users
 from api.serializers import SubscribeSerializer
-from user.models import Users, Follow
 from user.paginations import Pagination
 from user.serializers import (
     UserAvatarSerializer,
