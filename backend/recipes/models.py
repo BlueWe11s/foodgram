@@ -30,7 +30,7 @@ class Tags(models.Model):
     )
 
     class Meta:
-        ordering = ['name']
+        ordering = ['name',]
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
         indexes = [
@@ -75,14 +75,12 @@ class RecipeIngredient(models.Model):
         blank=False,
         null=False,
         on_delete=models.CASCADE,
-        related_name='recipe_ingredients',
     )
     ingredient = models.ForeignKey(
         Ingredient,
         blank=False,
         null=False,
         on_delete=models.CASCADE,
-        related_name='recipe_ingredients',
     )
     amount = models.PositiveSmallIntegerField(
         'Количество в рецепте',
@@ -92,6 +90,7 @@ class RecipeIngredient(models.Model):
     )
 
     class Meta:
+        default_related_name = 'recipe_ingredients'
         verbose_name = 'Рецепт-ингредиент'
         verbose_name_plural = 'Рецепты-ингредиенты'
 
@@ -110,14 +109,22 @@ class Recipe(models.Model):
         'Наименование',
         max_length=NAME_LENGTH
     )
-    image = models.ImageField('Изображение')
+    image = models.ImageField(
+        'Изображение',
+        upload_to='recipes/images/',
+        null=True,
+        default=None
+    )
     text = models.TextField('Описание')
     ingredients = models.ManyToManyField(
-        RecipeIngredient,
+        Ingredient,
+        through=RecipeIngredient,
+        blank=True,
         verbose_name='Ингридиенты',
     )
     tags = models.ManyToManyField(
         Tags,
+        blank=False,
         verbose_name='Список тегов',
     )
     cooking_time = models.PositiveSmallIntegerField(
@@ -153,7 +160,6 @@ class FavoriteRecipe(models.Model):
         User,
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
-        db_index=True
     )
     recipe = models.ForeignKey(
         Recipe,
@@ -191,11 +197,12 @@ class ShoppingCart(models.Model):
     )
 
     class Meta:
-        default_related_name = 'shoping_carts'
+        verbose_name = 'Корзина покупок'
+        verbose_name_plural = 'Корзина покупок'
+        default_related_name = 'shopping_carts'
         constraints = [
             models.UniqueConstraint(
                 fields=('user', 'recipe'),
                 name='unique_shopping_cart_recipe',
             ),
         ]
-

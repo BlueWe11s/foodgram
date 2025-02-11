@@ -161,40 +161,39 @@ class RecipeSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         return RecipeReadSerializer(instance).data
 
-    def validate(self, value):
-        tags = value.get('tags')
-        ingredients = value.get('recipes')
+    # def validate(self, value):
+    #     tags = value.get('tags')
+    #     ingredients = value.get('recipes')
 
-        if not tags:
-            raise serializers.ValidationError('Нужно выбрать теги')
-        if not ingredients:
-            raise serializers.ValidationError(
-                'Нужно выбрать ингредиенты'
-            )
+    #     if not tags:
+    #         raise serializers.ValidationError('Нужно выбрать теги')
+    #     if not ingredients:
+    #         raise serializers.ValidationError(
+    #             'Нужно выбрать ингредиенты'
+    #         )
+    #     return value
 
-        return value
+    # def validate_tags(self, value):
 
-    def validate_tags(self, value):
+    #     if len(value) < 1:
+    #         raise serializers.ValidationError('Добавьте теги')
+    #     return value
 
-        if len(value) < 1:
-            raise serializers.ValidationError('Добавьте теги')
-        return value
+    # def validate_ingredients(self, value):
+    #     ingredient_set = set()
 
-    def validate_ingredients(self, value):
-        ingredient_set = set()
+    #     if len(value) < 1:
+    #         raise serializers.ValidationError('Добавьте ингредиенты')
 
-        if len(value) < 1:
-            raise serializers.ValidationError('Добавьте ингредиенты')
+    #     for item in value:
+    #         item_tuple = tuple(sorted(item.items()))
 
-        for item in value:
-            item_tuple = tuple(sorted(item.items()))
+    #         if item_tuple in ingredient_set:
+    #             raise serializers.ValidationError(
+    #                 'Ингредиенты не могут повторяться')
+    #         ingredient_set.add(item_tuple)
 
-            if item_tuple in ingredient_set:
-                raise serializers.ValidationError(
-                    'Ингредиенты не могут повторяться')
-            ingredient_set.add(item_tuple)
-
-        return value
+    #     return value
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):

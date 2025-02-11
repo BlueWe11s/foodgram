@@ -38,7 +38,6 @@ class Users(AbstractUser):
         max_length=EMAIL_LENGTH,
         unique=True,
     )
-    # avatar = models.CharField(max_length=AVATAR_LENGTH, blank=True)
     avatar = models.ImageField(
         'Аватар',
         blank=True,
