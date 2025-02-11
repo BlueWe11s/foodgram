@@ -226,11 +226,8 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         )
 
     def get_user(self):
-        request = self.context['request']
-        if request:
-            return request.user
-        else:
-            return None
+        request = self.context.get('request')
+        return request.user if request else None
 
     def get_is_favorited(self, obj):
         user = self.get_user()

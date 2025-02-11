@@ -58,7 +58,7 @@ class Ingredient(models.Model):
         constraints = [
             UniqueConstraint(
                 fields=['name', 'measurement_unit'],
-                name='unique_name_measurement'
+                name='unique_measurement'
             )
         ]
 
@@ -68,7 +68,7 @@ class Ingredient(models.Model):
 
 class RecipeIngredient(models.Model):
     '''
-    Промежуточная модель рецептов и ингредиентов
+    Промежуточная модель ингредиентов в рецепте
     '''
     recipe = models.ForeignKey(
         'Recipe',
@@ -119,7 +119,7 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(
         Ingredient,
         through=RecipeIngredient,
-        blank=True,
+        blank=False,
         verbose_name='Ингридиенты',
     )
     tags = models.ManyToManyField(
