@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.db.models import Sum
+from django.shortcuts import get_object_or_404
 from rest_framework import permissions, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
@@ -17,7 +18,7 @@ from api.serializers import (
     RecipeReadSerializer,
     RecipeSerializer,
     ShoppingCartSerializer,
-    TagsSerializer,
+    TagsSerializer
 )
 from recipes.models import (
     Ingredient, Recipe, RecipeIngredient, Tags
@@ -38,8 +39,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return RecipeSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+    def add_to(self, request, pk, serializer_class, model_class):
+        recipe = get_object_or_404(Recipe, pk=pk)
+        serializer = serializer_class(
+            data={'recipe': recipe.id}, context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            RecipeReadSerializer(
+                recipe, context={'request': request}
+            ).data,
+            status=status.HTTP_201_CREATED
+        )
 
     @action(
         detail=False,

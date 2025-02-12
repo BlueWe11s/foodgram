@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib import admin
 from django.db import models
 from django.core.validators import MinValueValidator
 from django.db.models import UniqueConstraint
@@ -52,47 +53,19 @@ class Ingredient(models.Model):
     )
 
     class Meta:
+        default_related_name = 'ingredients'
         ordering = ('name',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
         constraints = [
             UniqueConstraint(
                 fields=['name', 'measurement_unit'],
-                name='unique_measurement'
+                name='unique_ingredients'
             )
         ]
 
     def __str__(self):
         return self.name
-
-
-class RecipeIngredient(models.Model):
-    '''
-    Промежуточная модель ингредиентов в рецепте
-    '''
-    recipe = models.ForeignKey(
-        'Recipe',
-        blank=False,
-        null=False,
-        on_delete=models.CASCADE,
-    )
-    ingredient = models.ForeignKey(
-        Ingredient,
-        blank=False,
-        null=False,
-        on_delete=models.CASCADE,
-    )
-    amount = models.PositiveSmallIntegerField(
-        'Количество в рецепте',
-        validators=[
-            MinValueValidator(MIN_AMOUNT),
-        ]
-    )
-
-    class Meta:
-        default_related_name = 'recipe_ingredients'
-        verbose_name = 'Рецепт-ингредиент'
-        verbose_name_plural = 'Рецепты-ингредиенты'
 
 
 class Recipe(models.Model):
@@ -112,19 +85,15 @@ class Recipe(models.Model):
     image = models.ImageField(
         'Изображение',
         upload_to='recipes/images/',
-        null=True,
-        default=None
     )
     text = models.TextField('Описание')
     ingredients = models.ManyToManyField(
         Ingredient,
-        through=RecipeIngredient,
-        blank=False,
+        through='RecipeIngredient',
         verbose_name='Ингридиенты',
     )
     tags = models.ManyToManyField(
         Tags,
-        blank=False,
         verbose_name='Список тегов',
     )
     cooking_time = models.PositiveSmallIntegerField(
@@ -140,6 +109,13 @@ class Recipe(models.Model):
         verbose_name='Дата публикации',
         auto_now_add=True
     )
+    short_link = models.CharField(
+        'Короткая ссылка',
+        max_length=NAME_LENGTH,
+        blank=True,
+        unique=True,
+        null=True
+    )
 
     class Meta:
         ordering = ('-pub_date',)
@@ -149,6 +125,34 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class RecipeIngredient(models.Model):
+    '''
+    Промежуточная модель ингредиентов в рецепте
+    '''
+    recipe = models.ForeignKey(
+        Recipe,
+        verbose_name='Рецепт',
+        on_delete=models.CASCADE
+    )
+    ingredient = models.ForeignKey(
+        Ingredient,
+        verbose_name='Ингредиент',
+        on_delete=models.CASCADE
+    )
+    amount = models.PositiveSmallIntegerField(
+        'Количество в рецепте',
+        validators=[
+            MinValueValidator(MIN_AMOUNT),
+        ]
+    )
+
+    class Meta:
+        default_related_name = 'recipe_ingredients'
+        verbose_name = 'Рецепт-ингредиент'
+        verbose_name_plural = 'Рецепты-ингредиенты'
+        ordering = ('ingredient',)
 
 
 class FavoriteRecipe(models.Model):
