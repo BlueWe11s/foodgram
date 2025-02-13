@@ -126,19 +126,26 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ['author']
 
+    def to_internal_value(self, data):
+        tags = data.get('tags')
+        ingredients = data.get('ingredients')
+        internal_data = super().to_internal_value(data)
+        internal_data['tags'] = tags
+        internal_data['ingredients'] = ingredients
+        return internal_data
+
     @staticmethod
     def update_tags_and_ingredients(validated_data, recipe):
         """Обновляет теги и ингредиенты для рецепта."""
-        ingredients = validated_data.pop('recipe_ingredients', [])
+        ingredients = validated_data.pop('recipe_ingerients', [])
         tags = validated_data.pop('tags', [])
         recipe.tags.set(tags)
-        RecipeIngredient.objects.bulk_create(
-            RecipeIngredient(
+        for ingredient in ingredients:
+            RecipeIngredient.objects.get(
                 recipe=recipe,
-                ingredient=ingredient.get('ingredient'),
-                amount=ingredient.get('amount'),
-            ) for ingredient in ingredients
-        )
+                ingredient=ingredient['id'],
+                amount=ingredient['amount']
+            )
 
     def create(self, validated_data):
         """Создает новый рецепт с привязкой тегов и ингредиентов."""
@@ -164,12 +171,6 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
         return super().update(instance, validated_data)
 
-    def to_representation(self, instance):
-        """Возвращает данные рецепта через RecipeGetSerializer."""
-        return RecipeIngredientsSerializer(
-            instance, context={'request': self.context.get('request')}
-        ).data
-
     # def validate(self, value):
     #     tags = value.get('tags')
     #     ingredients = value.get('recipes')
@@ -189,7 +190,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     '''
 
     ingredients = RecipeIngredientsSerializer(
-        source='recipe_ingredient',
+        source='recipe_ingredients',
         many=True,
         read_only=True,
     )
