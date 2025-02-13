@@ -97,8 +97,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     ingredients = CreateIngredientRecipeSerializer(
         many=True,
-        # source='recipe_ingredients',
-        # required=True
+        source='recipe_ingredients',
         read_only=True
     )
     tags = serializers.PrimaryKeyRelatedField(
@@ -127,46 +126,42 @@ class RecipeSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ['author']
 
-    def add_ingredients(self, model, recipe, ingredients):
-        """Добавляет ингредиенты к рецепту."""
-        model.objects.bulk_create(
-            (
-                model(
-                    recipe=recipe,
-                    ingredient=ingredient['ingredient'],
-                    amount=ingredient['amount']
-                )
-                for ingredient in ingredients
-            )
-        )
-
-    def update_tags_and_ingredients(self, recipe, tags, ingredients):
+    @staticmethod
+    def update_tags_and_ingredients(validated_data, recipe):
         """Обновляет теги и ингредиенты для рецепта."""
+        ingredients = validated_data.pop('recipe_ingredients', [])
+        tags = validated_data.pop('tags', [])
         recipe.tags.set(tags)
-        recipe.recipe_ingredients.all().delete()
         RecipeIngredient.objects.bulk_create(
-            [
-                RecipeIngredient(recipe=recipe, **ingredient)
-                for ingredient in ingredients
-            ]
+            RecipeIngredient(
+                recipe=recipe,
+                ingredient=ingredient.get('ingredient'),
+                amount=ingredient.get('amount'),
+            ) for ingredient in ingredients
         )
 
     def create(self, validated_data):
         """Создает новый рецепт с привязкой тегов и ингредиентов."""
-        tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('recipe_ingredients')
-        validated_data.pop('author', None)
         recipe = Recipe.objects.create(
-            author=self.context['request'].user, **validated_data
+            author=self.context.get('request').user,
+            image=validated_data.pop('image'),
+            name=validated_data.pop('name'),
+            text=validated_data.pop('text'),
+            cooking_time=validated_data.pop('cooking_time'), )
+        self.update_tags_and_ingredients(
+            validated_data,
+            recipe
         )
-        self.update_tags_and_ingredients(recipe, tags, ingredients)
         return recipe
 
     def update(self, instance, validated_data):
         """Обновляет рецепт с возможностью изменить теги и ингредиенты."""
-        tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('recipe_ingredients')
-        self.update_tags_and_ingredients(instance, tags, ingredients)
+        instance.ingredients.clear()
+        instance.tags.clear()
+        self.update_tags_and_ingredients(
+            validated_data,
+            instance,
+        )
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
@@ -175,17 +170,17 @@ class RecipeSerializer(serializers.ModelSerializer):
             instance, context={'request': self.context.get('request')}
         ).data
 
-    def validate(self, value):
-        tags = value.get('tags')
-        ingredients = value.get('recipes')
+    # def validate(self, value):
+    #     tags = value.get('tags')
+    #     ingredients = value.get('recipes')
 
-        if not tags:
-            raise serializers.ValidationError('Нужно выбрать теги')
-        if not ingredients:
-            raise serializers.ValidationError(
-                'Нужно выбрать ингредиенты'
-            )
-        return value
+    #     if not tags:
+    #         raise serializers.ValidationError('Нужно выбрать теги')
+    #     if not ingredients:
+    #         raise serializers.ValidationError(
+    #             'Нужно выбрать ингредиенты'
+    #         )
+    #     return value
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):

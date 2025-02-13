@@ -39,19 +39,19 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return RecipeSerializer
 
-    def add_to(self, request, pk, serializer_class, model_class):
-        recipe = get_object_or_404(Recipe, pk=pk)
-        serializer = serializer_class(
-            data={'recipe': recipe.id}, context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(
-            RecipeReadSerializer(
-                recipe, context={'request': request}
-            ).data,
-            status=status.HTTP_201_CREATED
-        )
+    # def add_to(self, request, pk, serializer_class, model_class):
+    #     recipe = get_object_or_404(Recipe, pk=pk)
+    #     serializer = serializer_class(
+    #         data={'recipe': recipe.id}, context={'request': request}
+    #     )
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(
+    #         RecipeReadSerializer(
+    #             recipe, context={'request': request}
+    #         ).data,
+    #         status=status.HTTP_201_CREATED
+    #     )
 
     @action(
         detail=False,
