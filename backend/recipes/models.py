@@ -53,7 +53,6 @@ class Ingredient(models.Model):
     )
 
     class Meta:
-        default_related_name = 'ingredients'
         ordering = ('name',)
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
@@ -99,11 +98,6 @@ class Recipe(models.Model):
     cooking_time = models.PositiveSmallIntegerField(
         'Время приготовления рецепта',
         validators=[MinValueValidator(MIN_COOKING_TIME)]
-    )
-    slug = models.SlugField(
-        'Уникальный идентификатор',
-        max_length=SLUG_LENGTH,
-        unique=True
     )
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации',

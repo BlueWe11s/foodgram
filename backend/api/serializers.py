@@ -1,10 +1,12 @@
+from secrets import choice
+from string import digits, ascii_letters
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework.validators import UniqueTogetherValidator
-from rest_framework.exceptions import ValidationError
 
 from recipes.models import Tags, Ingredient, Recipe, RecipeIngredient
+from recipes.constants import PAGES
 from user.serializers import UserSerializer
 from api.mixins import RecipeActionMixin
 from user.models import Users, Follow
@@ -116,11 +118,12 @@ class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
+            'id',
+            'name',
             'author',
             'ingredients',
             'tags',
             'image',
-            'name',
             'text',
             'cooking_time',
         )
@@ -134,54 +137,76 @@ class RecipeSerializer(serializers.ModelSerializer):
         internal_data['ingredients'] = ingredients
         return internal_data
 
-    @staticmethod
-    def update_tags_and_ingredients(validated_data, recipe):
-        """Обновляет теги и ингредиенты для рецепта."""
-        ingredients = validated_data.pop('recipe_ingerients', [])
-        tags = validated_data.pop('tags', [])
-        recipe.tags.set(tags)
-        for ingredient in ingredients:
-            RecipeIngredient.objects.get(
-                recipe=recipe,
-                ingredient=ingredient['id'],
-                amount=ingredient['amount']
-            )
-
     def create(self, validated_data):
-        """Создает новый рецепт с привязкой тегов и ингредиентов."""
-        recipe = Recipe.objects.create(
-            author=self.context.get('request').user,
-            image=validated_data.pop('image'),
-            name=validated_data.pop('name'),
-            text=validated_data.pop('text'),
-            cooking_time=validated_data.pop('cooking_time'), )
-        self.update_tags_and_ingredients(
-            validated_data,
-            recipe
-        )
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        request = self.context['request']
+        validated_data['author'] = User.objects.get(id=request.user.id)
+        recipe = Recipe.objects.create(**validated_data)
+        for ingredient in ingredients:
+            RecipeIngredient.objects.create(
+                recipe=recipe,
+                ingredient=Ingredient.objects.get(id=ingredient.get('id')),
+                amount=ingredient.get('amount'),
+            )
+        recipe.tags.set(tags)
         return recipe
 
     def update(self, instance, validated_data):
-        """Обновляет рецепт с возможностью изменить теги и ингредиенты."""
-        instance.ingredients.clear()
-        instance.tags.clear()
-        self.update_tags_and_ingredients(
-            validated_data,
-            instance,
-        )
-        return super().update(instance, validated_data)
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        RecipeIngredient.objects.filter(recipe=instance).delete()
+        instance.ingredients.all().delete()
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        instance.save()
+        for ingredient in ingredients:
+            RecipeIngredient.objects.create(
+                recipe=instance,
+                ingredient=Ingredient.objects.get(id=ingredient.get('id')),
+                amount=ingredient.get('amount'),
+            )
+        instance.tags.set(tags)
+        return instance
 
     # def validate(self, value):
     #     tags = value.get('tags')
-    #     ingredients = value.get('recipes')
+    #     ingredients = value.get('recipe_ingredients')
 
     #     if not tags:
-    #         raise serializers.ValidationError('Нужно выбрать теги')
+    #         raise serializers.ValidationError('Необходимо выбрать тэги.')
     #     if not ingredients:
     #         raise serializers.ValidationError(
-    #             'Нужно выбрать ингредиенты'
-    #         )
+    #             'Необходимо выбрать ингридиенты.')
+
     #     return value
+
+    # def validate_tags(self, value):
+
+    #     if len(value) != len(set(value)):
+    #         raise serializers.ValidationError('Теги не должны повторяться.')
+    #     if len(value) < 1:
+    #         raise serializers.ValidationError('Добавьте теги.')
+    #     return value
+
+    # def validate_ingredients(self, value):
+    #     ingredient_set = set()
+
+    #     if len(value) < 1:
+    #         raise serializers.ValidationError('Добавьте ингредиенты.')
+
+    #     for item in value:
+    #         item_tuple = tuple(sorted(item.items()))
+
+    #         if item_tuple in ingredient_set:
+    #             raise serializers.ValidationError(
+    #                 'Ингредиенты не должны повторяться.')
+    #         ingredient_set.add(item_tuple)
+
+    #     return value
+
+    def to_representation(self, instance):
+        return RecipeReadSerializer(instance, context=self.context).data
 
 
 class RecipeReadSerializer(serializers.ModelSerializer):

@@ -5,6 +5,7 @@ from rest_framework import permissions, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
+from rest_framework.reverse import reverse
 from django_filters.rest_framework import DjangoFilterBackend
 # from urlshortner.models import Url
 # from urlshortner.utils import shorten_url
@@ -39,32 +40,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeReadSerializer
         return RecipeSerializer
 
-    # def add_to(self, request, pk, serializer_class, model_class):
-    #     recipe = get_object_or_404(Recipe, pk=pk)
-    #     serializer = serializer_class(
-    #         data={'recipe': recipe.id}, context={'request': request}
-    #     )
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #     return Response(
-    #         RecipeReadSerializer(
-    #             recipe, context={'request': request}
-    #         ).data,
-    #         status=status.HTTP_201_CREATED
-    #     )
-
     @action(
         detail=False,
-        methods=('PUT',),
+        methods=('get',),
         permission_classes=(AllowAny,),
         url_path='get-link',
     )
-    def get_link(request):
-        serializer = RecipeSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
+    def get_link(self, request, pk):
+        recipe = get_object_or_404(Recipe, pk=pk)
+        short_link = f'{request.get_full_path()}'[:-10]
+        return Response({'short-link': short_link}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], url_path='favorite',
             permission_classes=[permissions.IsAuthenticated])
