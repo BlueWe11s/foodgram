@@ -46,12 +46,6 @@ class UserSerializer(DjoserUserSerializer):
             )
         return value
 
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.follow_to.filter(user=request.user).exists()
-        return False
-
 
 class UserAvatarSerializer(serializers.Serializer):
     '''

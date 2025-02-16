@@ -5,7 +5,14 @@ from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework.validators import UniqueTogetherValidator
 
-from recipes.models import Tags, Ingredient, Recipe, RecipeIngredient
+from recipes.models import (
+    Tags,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    FavoriteRecipe,
+    ShoppingCart
+)
 from recipes.constants import PAGES
 from user.serializers import UserSerializer
 from api.mixins import RecipeActionMixin
@@ -249,6 +256,10 @@ class FavouriteSerializer(RecipeActionMixin):
     added_message = 'Рецепт уже был добавлен в избранное'
     removed_message = 'Рецепт уже был удалён из избранного'
 
+    class Meta:
+        model = FavoriteRecipe
+        fields = ('user', 'recipe')
+
     def added(self, user, recipe):
         return recipe.favorites.filter(user=user).exists()
 
@@ -258,6 +269,7 @@ class FavouriteSerializer(RecipeActionMixin):
     def get_from_user_collection(self, user, recipe):
         return user.favorites.filter(recipe=recipe).first()
 
+     
 
 class ShoppingCartSerializer(RecipeActionMixin):
     '''
@@ -266,6 +278,10 @@ class ShoppingCartSerializer(RecipeActionMixin):
 
     added_message = 'Рецепт уже был добавлен в корзину'
     removed_message = 'Рецепт уже был удалён из корзины'
+
+    class Meta:
+        model = ShoppingCart
+        fields = ('user', 'recipe')
 
     def added(self, user, recipe):
         return recipe.shopping_carts.filter(user=user).exists()
@@ -299,9 +315,9 @@ class SubscribingSerializer(serializers.ModelSerializer):
     Сериализатор подписчиков
     '''
 
-    is_subscribed = serializers.SerializerMethodField()
-    recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.ReadOnlyField(source='recipes.count')
+    is_subscribed = serializers.SerializerMethodField(default=False)
+    recipes = serializers.SerializerMethodField(method_name='get_recipes')
+    recipes_count = serializers.ReadOnlyField(default=0)
 
     class Meta:
         model = Users
@@ -338,6 +354,9 @@ class SubscribingSerializer(serializers.ModelSerializer):
             context={'request': request},
         ).data
 
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
+
 
 class SubscribeSerializer(serializers.ModelSerializer):
     '''
@@ -348,15 +367,8 @@ class SubscribeSerializer(serializers.ModelSerializer):
         model = Follow
         fields = (
             'user',
-            'subscribing',
+            'author'
         )
-        validators = [
-            UniqueTogetherValidator(
-                fields=('user', 'subscribing'),
-                queryset=model.objects.all(),
-                message='Вы уже подписаны на этого пользователя',
-            )
-        ]
 
     def validate_subscribing(self, data):
 
@@ -368,6 +380,6 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return SubscribingSerializer(
-            instance.subscribing,
+            instance.author,
             context=self.context,
         ).data

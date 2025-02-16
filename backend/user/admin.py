@@ -21,7 +21,7 @@ class UserAdmin(BaseUserAdmin):
 class SubscriptionAdmin(admin.ModelAdmin):
     list_display = (
         'user',
-        'follow_to'
+        'author'
     )
 
 

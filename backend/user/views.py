@@ -33,30 +33,28 @@ class UsersViewSet(UserViewSet):
         url_path='subscribe',
         permission_classes=[permissions.IsAuthenticated]
     )
-    def post_subscribe(self, request, **kwargs):
-        following = get_object_or_404(Users, pk=self.kwargs.get('id'))
+    def post_subscribe(self, request, id):
+        user = request.user
+        data = {'user': user.id, 'author': id}
         serializer = SubscribeSerializer(
-            data={
-                'user': request.user.id,
-                'subscribing': following.id,
-            },
+            data=data,
             context={'request': request},
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer.save()
+        return Response(serializer.data, status=HTTP_201_CREATED)
 
     @post_subscribe.mapping.delete
-    def delete_subscribe(self, request, *args, **kwargs):
-        following = get_object_or_404(Users, pk=self.kwargs.get('id'))
-        follow = Follow.objects.filter(
-            user=request.user, subscribing=following)
-        if follow:
+    def delete_subscribe(self, request, id):
+        user = request.user
+        author = get_object_or_404(Users, id=id)
+        follow = Follow.objects.filter(user=user, author=author)
+        if follow.exists():
             follow.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(status=HTTP_204_NO_CONTENT)
         return Response(
-            {'error': 'Вы не подписаны на этого пользователя.'},
-            status=status.HTTP_400_BAD_REQUEST
+            {'error': 'Вы не подписаны на этого автора'},
+            status=HTTP_400_BAD_REQUEST
         )
 
     @action(

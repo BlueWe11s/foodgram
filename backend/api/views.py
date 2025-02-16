@@ -7,8 +7,6 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from django_filters.rest_framework import DjangoFilterBackend
-# from urlshortner.models import Url
-# from urlshortner.utils import shorten_url
 
 from api.filters import RecipeFilter
 from recipes.permissions import IsAuthor
