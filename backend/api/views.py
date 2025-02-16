@@ -41,10 +41,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipeSerializer
 
     @action(
-        detail=False,
+        detail=True,
         methods=('get',),
         permission_classes=(AllowAny,),
-        url_path='get-link',
+        url_path='get-link'
     )
     def get_link(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
