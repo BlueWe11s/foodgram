@@ -15,26 +15,23 @@ class RecipeActionMixin(serializers.ModelSerializer):
 
     def validate(self, data):
         user = self.context['request'].user
-        pk = self.context['id']
-        recipe = get_object_or_404(Recipe, id=pk)
-
-        if self.added(user, recipe):
+        id = self.context['id']
+        recipe = get_object_or_404(Recipe, id=id)
+        if recipe.favorites.filter(user=user).exists():
             raise serializers.ValidationError(self.added_message)
-
         return data
 
     def create(self, validated_data):
         user = self.context['request'].user
-        pk = self.context['id']
-        recipe = get_object_or_404(Recipe, id=pk)
-        action_item = self._add_to_user_collection(user, recipe)
+        id = self.context['id']
+        recipe = get_object_or_404(Recipe, id=id)
+        action_item = user.favorites.create(recipe=recipe)
         return action_item.recipe
 
     def delete(self, user):
-        pk = self.context['id']
-        recipe = get_object_or_404(Recipe, id=pk)
-        action_item = self._get_from_user_collection(user, recipe)
-
+        id = self.context['id']
+        recipe = get_object_or_404(Recipe, id=id)
+        action_item = user.favorites.filter(recipe=recipe).first()
         if not action_item:
             raise serializers.ValidationError(self.removed_message)
 

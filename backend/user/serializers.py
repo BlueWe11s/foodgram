@@ -1,26 +1,24 @@
 from django.contrib.auth import get_user_model
-from django.shortcuts import get_object_or_404
-from djoser.serializers import UserSerializer as DjoserUserSerializer
+from djoser.serializers import UserSerializer as DjoserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-from rest_framework_simplejwt.tokens import RefreshToken
 import re
 
 from django.core.exceptions import ValidationError
-from user.models import Users
+from user.models import Follow
 
 
 User = get_user_model()
 
 
-class UserSerializer(DjoserUserSerializer):
+class UserSerializer(DjoserSerializer):
     '''
     Сериализатор для пользователя
     '''
     is_subscribed = serializers.SerializerMethodField(default=False)
 
-    class Meta(DjoserUserSerializer.Meta):
-        model = Users
+    class Meta(DjoserSerializer.Meta):
+        model = User
         fields = (
             'id',
             'email',
@@ -46,6 +44,13 @@ class UserSerializer(DjoserUserSerializer):
             )
         return value
 
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        return Follow.objects.filter(
+            user=request.user.id,
+            author=obj.id
+        ).exists()
+
 
 class UserAvatarSerializer(serializers.Serializer):
     '''
@@ -61,5 +66,5 @@ class UserAvatarSerializer(serializers.Serializer):
         return instance
 
     class Meta:
-        model = Users
+        model = User
         fields = ('avatar',)

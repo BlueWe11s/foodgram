@@ -257,19 +257,9 @@ class FavouriteSerializer(RecipeActionMixin):
     removed_message = 'Рецепт уже был удалён из избранного'
 
     class Meta:
-        model = FavoriteRecipe
-        fields = ('user', 'recipe')
+        model = Recipe
+        fields = ('id',)
 
-    def added(self, user, recipe):
-        return recipe.favorites.filter(user=user).exists()
-
-    def add_to_user_collection(self, user, recipe):
-        return user.favorites.create(recipe=recipe)
-
-    def get_from_user_collection(self, user, recipe):
-        return user.favorites.filter(recipe=recipe).first()
-
-     
 
 class ShoppingCartSerializer(RecipeActionMixin):
     '''
@@ -337,7 +327,8 @@ class SubscribingSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         return Follow.objects.filter(
             user=self.context['request'].user,
-            subscribing=obj).exists()
+            author=obj
+        ).exists()
 
     def get_recipes(self, obj):
         request = self.context['request']
@@ -370,11 +361,19 @@ class SubscribeSerializer(serializers.ModelSerializer):
             'author'
         )
 
-    def validate_subscribing(self, data):
-
-        if self.context['request'].user == data:
+    def validate(self, data):
+        user = data['user']
+        author = data['author']
+        if user == author:
             raise serializers.ValidationError(
-                'Вы не можете подписаться сами на себя'
+                'Вы не можете подписаться на себя'
+            )
+        if Follow.objects.filter(
+            user=user,
+            author=author
+        ).exists():
+            raise serializers.ValidationError(
+                'Вы уже подписаны'
             )
         return data
 

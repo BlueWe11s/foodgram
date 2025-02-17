@@ -49,8 +49,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         short_link = f'{request.get_full_path()}'[:-10]
         return Response({'short-link': short_link}, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], url_path='favorite',
-            permission_classes=[permissions.IsAuthenticated])
+    @action(
+        detail=True,
+        methods=['post'],
+        url_path='favorite',
+        permission_classes=[permissions.IsAuthenticated]
+    )
     def post_favourite(self, request, pk):
         return self.add_item_to_list(request.user, pk, 'favorite')
 
@@ -58,13 +62,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def favourite_delete(self, request, pk):
         return self.remove_item_from_list(request.user, pk, 'favorite')
 
-    @action(detail=True, methods=['post'], url_path='shopping_cart',
-            permission_classes=[permissions.IsAuthenticated])
+    @action(
+        detail=True,
+        methods=['post'],
+        url_path='shopping_cart',
+        permission_classes=[permissions.IsAuthenticated]
+    )
     def post_shopping_cart(self, request, pk):
         return self.add_item_to_list(request.user, pk, 'shopping_cart')
 
     @post_shopping_cart.mapping.delete
-    def shopping_cart_delete(self, request, pk):
+    def delete_shopping_cart(self, request, pk):
         return self.remove_item_from_list(request.user, pk, 'shopping_cart')
 
     def add_item_to_list(self, user, pk, list_type):
@@ -109,7 +117,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
 
     @action(
-        detail=False, methods=['get'],
+        detail=False,
+        methods=['get'],
         url_path='download_shopping_cart',
         permission_classes=[permissions.IsAuthenticated]
     )
@@ -120,13 +129,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
             .values('ingredient__name', 'ingredient__measurement_unit')
             .annotate(total_amount=Sum('amount'))
         )
-
         if not ingredients.exists():
             return Response(
                 {'errors': 'В корзине ничего нет.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
         shopping_list_text = 'Список покупок:\n\n'
         for item in ingredients:
             shopping_list_text += (
@@ -134,11 +141,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 f'({item["ingredient__measurement_unit"]}) — '
                 f'{item["total_amount"]}\n'
             )
-
         response = HttpResponse(shopping_list_text, content_type='text/plain')
         response[
             'Content-Disposition'] = 'attachment; filename="shopping_cart.txt"'
-
         return response
 
 
