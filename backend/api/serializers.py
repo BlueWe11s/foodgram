@@ -1,9 +1,6 @@
-from secrets import choice
-from string import digits, ascii_letters
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework.validators import UniqueTogetherValidator
 
 from recipes.models import (
     Tags,
@@ -13,9 +10,7 @@ from recipes.models import (
     FavoriteRecipe,
     ShoppingCart
 )
-from recipes.constants import PAGES
 from user.serializers import UserSerializer
-from api.mixins import RecipeActionMixin
 from user.models import Users, Follow
 
 User = get_user_model()
@@ -248,39 +243,49 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         return False
 
 
-class FavouriteSerializer(RecipeActionMixin):
+class FavouriteSerializer(serializers.ModelSerializer):
     '''
-    Сериализатор избранного
+    Сериализатор модели избранных рецептов
     '''
-
-    added_message = 'Рецепт уже был добавлен в избранное'
-    removed_message = 'Рецепт уже был удалён из избранного'
 
     class Meta:
-        model = Recipe
-        fields = ('id',)
+        model = FavoriteRecipe
+        fields = ('user', 'recipe')
+
+    def validate(self, data):
+        if FavoriteRecipe.objects.filter(**data).exists():
+            raise serializers.ValidationError(
+                'Рецепт уже добавлен в избранное'
+            )
+        return data
+
+    def to_representation(self, instance):
+        return CartsSerializer(
+            instance.recipe
+        ).data
 
 
-class ShoppingCartSerializer(RecipeActionMixin):
+class ShoppingCartSerializer(serializers.ModelSerializer):
     '''
-    Серилизатор корзины
+    Сериализатор модели корзины
     '''
-
-    added_message = 'Рецепт уже был добавлен в корзину'
-    removed_message = 'Рецепт уже был удалён из корзины'
 
     class Meta:
         model = ShoppingCart
         fields = ('user', 'recipe')
 
-    def added(self, user, recipe):
-        return recipe.shopping_carts.filter(user=user).exists()
+    def validate(self, data):
+        if ShoppingCart.objects.filter(**data).exists():
+            raise serializers.ValidationError(
+                'Рецепт уже добавлен в список покупок'
+            )
+        return data
 
-    def add_to_user_collection(self, user, recipe):
-        return user.shopping_carts.create(recipe=recipe)
-
-    def get_from_user_collection(self, user, recipe):
-        return user.shopping_carts.filter(recipe=recipe).first()
+    def to_representation(self, instance):
+        return CartsSerializer(
+            instance.recipe,
+            context={'request': self.context.get('request')}
+        ).data
 
 
 class CartsSerializer(serializers.ModelSerializer):

@@ -1,17 +1,14 @@
 from django.http import HttpResponse
-from django.db.models import Sum
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, serializers, status, viewsets
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
-from rest_framework.reverse import reverse
 from django_filters.rest_framework import DjangoFilterBackend
 
 from api.filters import RecipeFilter
 from recipes.permissions import IsAuthor
 from api.serializers import (
-    CartsSerializer,
     FavouriteSerializer,
     IngredientsSerializer,
     RecipeReadSerializer,
@@ -20,7 +17,7 @@ from api.serializers import (
     TagsSerializer
 )
 from recipes.models import (
-    Ingredient, Recipe, RecipeIngredient, Tags
+    Ingredient, Recipe, Tags, ShoppingCart, FavoriteRecipe, RecipeIngredient
 )
 from user.views import Pagination
 
@@ -50,70 +47,78 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return Response({'short-link': short_link}, status=status.HTTP_200_OK)
 
     @action(
+        methods=['post', 'delete'],
         detail=True,
-        methods=['post'],
+        permission_classes=[permissions.IsAuthenticated],
         url_path='favorite',
-        permission_classes=[permissions.IsAuthenticated]
+        url_name='favorite',
     )
-    def post_favourite(self, request, pk):
-        return self.add_item_to_list(request.user, pk, 'favorite')
-
-    @post_favourite.mapping.delete
-    def favourite_delete(self, request, pk):
-        return self.remove_item_from_list(request.user, pk, 'favorite')
+    def favorite(self, request, pk):
+        """Добавляет или удаляет рецепт из избранного пользователя."""
+        return self.handle_favorite_or_cart(
+            request=request,
+            pk=pk,
+            model=FavoriteRecipe,
+            serializer_class=FavouriteSerializer,
+            already_exists_message='{} уже в избранном.'
+        )
 
     @action(
+        methods=['post', 'delete'],
         detail=True,
-        methods=['post'],
+        permission_classes=[permissions.IsAuthenticated],
         url_path='shopping_cart',
-        permission_classes=[permissions.IsAuthenticated]
+        url_name='shopping_cart',
     )
-    def post_shopping_cart(self, request, pk):
-        return self.add_item_to_list(request.user, pk, 'shopping_cart')
+    def shopping_cart(self, request, pk):
+        return self.handle_favorite_or_cart(
+            request=request,
+            pk=pk,
+            model=ShoppingCart,
+            serializer_class=ShoppingCartSerializer,
+            already_exists_message='{} уже добавлен'
+        )
 
-    @post_shopping_cart.mapping.delete
-    def delete_shopping_cart(self, request, pk):
-        return self.remove_item_from_list(request.user, pk, 'shopping_cart')
-
-    def add_item_to_list(self, user, pk, list_type):
-        try:
-            if list_type == 'favorite':
-                serializer = FavouriteSerializer(
-                    data={}, context={'request': self.request, 'id': pk})
-                serializer.is_valid(raise_exception=True)
-                favourite_item = serializer.create(serializer.validated_data)
-                item_data = CartsSerializer(
-                    favourite_item).data
-            elif list_type == 'shopping_cart':
-                serializer = ShoppingCartSerializer(
-                    data={}, context={'request': self.request, 'id': pk})
-                serializer.is_valid(raise_exception=True)
-                shopping_cart_item = serializer.create(
-                    serializer.validated_data)
-                item_data = CartsSerializer(
-                    shopping_cart_item).data
-            return Response(item_data, status=status.HTTP_201_CREATED)
-        except serializers.ValidationError:
-            return Response(
-                {'error': str(serializers.ValidationError)},
-                status=status.HTTP_400_BAD_REQUEST
+    def handle_favorite_or_cart(
+        self,
+        request,
+        pk,
+        model,
+        serializer_class,
+        already_exists_message,
+    ):
+        """Добавляет/удаляет рецепты в избранное или корзину пользователя."""
+        user = request.user
+        if request.method == 'POST':
+            recipe = get_object_or_404(Recipe, id=pk)
+            if model.objects.filter(recipe=recipe, user=user).exists():
+                return Response(
+                    {'detail': already_exists_message.format(recipe.name)},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            serializer = serializer_class(
+                data={'recipe': recipe.id, 'user': user.id},
+                context={'request': request}
             )
-
-    def remove_item_from_list(self, user, pk, list_type):
-        try:
-            if list_type == 'favorite':
-                serializer = FavouriteSerializer(
-                    context={'request': self.request, 'id': pk})
-                serializer.delete(user)
-            elif list_type == 'shopping_cart':
-                serializer = ShoppingCartSerializer(
-                    context={'request': self.request, 'id': pk})
-                serializer.delete(user)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except serializers.ValidationError:
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
             return Response(
-                {'errors': 'ValidationError'},
-                status=status.HTTP_400_BAD_REQUEST
+                serializer.data, status=status.HTTP_201_CREATED
+            )
+        elif request.method == 'DELETE':
+            deleted_count, _ = model.objects.filter(
+                recipe__id=pk, user=user
+            ).delete()
+            if deleted_count:
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            if not Recipe.objects.filter(id=pk).exists():
+                return Response(
+                    {'detail': 'Рецепта не существует'},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            return Response(
+                {'detail': 'Рецепта нет в списке'},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
     @action(
