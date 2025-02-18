@@ -9,11 +9,11 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-t7g3kaxa(axj&nnvyk)yphd1+#+%c6yp_!6dky8wnyyxe3t!&v'  # os.getenv("SECRET_KEY", 'key')
+SECRET_KEY = os.getenv("SECRET_KEY", 'key')
 
-DEBUG = True  # os.getenv("DEBUG", False)
+DEBUG = os.getenv("DEBUG", True)
 
-ALLOWED_HOSTS = ['89.169.169.184', '127.0.0.1', 'localhost', ]  # os.getenv("ALLOWED_HOSTS", "localhost")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost")
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -62,19 +62,17 @@ TEMPLATES = [
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'django'),
+        'USER': os.getenv('POSTGRES_USER', 'django'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', ''),
+        'PORT': os.getenv('DB_PORT', 5432),
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {

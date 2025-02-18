@@ -7,58 +7,56 @@ from user.constants import SLUG_LENGTH, EMAIL_LENGTH
 
 
 class Users(AbstractUser):
-    '''
+    """
     Модель Пользователей
-    '''
-    USERNAME_FIELD = 'email'
+    """
+
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = (
-        'username',
-        'first_name',
-        'last_name',
-        'password',
+        "username",
+        "first_name",
+        "last_name",
+        "password",
     )
     first_name = models.CharField(
-        'Имя',
+        "Имя",
         max_length=SLUG_LENGTH,
         unique=True,
     )
     last_name = models.CharField(
-        'Фамилия',
+        "Фамилия",
         max_length=SLUG_LENGTH,
         unique=True,
     )
     username = models.CharField(
-        'Логин',
+        "Логин",
         max_length=SLUG_LENGTH,
         unique=True,
-        validators=(UnicodeUsernameValidator(),)
+        validators=(UnicodeUsernameValidator(),),
     )
     email = models.EmailField(
-        'Почта',
+        "Почта",
         max_length=EMAIL_LENGTH,
         unique=True,
     )
     avatar = models.ImageField(
-        'Аватар',
-        blank=True,
-        null=True,
-        upload_to='user/avatar/',
-        default=''
+        "Аватар", blank=True, null=True, upload_to="user/avatar/", default=""
     )
 
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ('username', 'first_name', 'last_name', 'password')
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ("username", "first_name", "last_name", "password")
 
     class Meta:
-        ordering = ('username',)
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
+        ordering = ("username",)
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
 
 
 class Follow(models.Model):
-    '''
+    """
     Модель фолловеров
-    '''
+    """
+
     user = models.ForeignKey(
         Users,
         on_delete=models.CASCADE,
@@ -66,19 +64,19 @@ class Follow(models.Model):
     author = models.ForeignKey(
         Users,
         on_delete=models.CASCADE,
-        related_name='followings',
-        verbose_name='followings',
+        related_name="followings",
+        verbose_name="followings",
     )
 
     class Meta:
-        verbose_name = 'Подписки'
-        verbose_name_plural = 'Подписки'
+        verbose_name = "Подписки"
+        verbose_name_plural = "Подписки"
         constraints = [
             models.UniqueConstraint(
-                fields=['user', 'author'],
-                name='unique_follow',
+                fields=["user", "author"],
+                name="unique_follow",
             ),
         ]
 
     def __str__(self):
-        return f'{self.user} подписан на {self.author}'
+        return f"{self.user} подписан на {self.author}"
