@@ -1,6 +1,6 @@
 SECRET_KEY = 'django-insecure-t7g3kaxa(axj&nnvyk)yphd1+#+%c6yp_!6dky8wnyyxe3t!&v'
 DEBUG = False
-ALLOWED_HOSTS = 89.169.169.184, 127.0.0.1, localhost
+ALLOWED_HOSTS = ['89.169.169.184', '127.0.0.1', 'localhost', 'bboi.hopto.org']
 POSTGRES_DB = foodgram
 POSTGRES_USER = foodgram_user
 POSTGRES_PASSWORD = foodgram_password
