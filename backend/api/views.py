@@ -5,6 +5,7 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
+from rest_framework.reverse import reverse
 from django_filters.rest_framework import DjangoFilterBackend
 
 from api.filters import RecipeFilter
@@ -48,8 +49,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path="get-link",
     )
     def get_link(self, request, pk):
-        short_link = f"{request.get_full_path()}"[:-10]
-        return Response({"short-link": short_link}, status=status.HTTP_200_OK)
+        recipe = get_object_or_404(Recipe, pk=pk)
+        short_link = reverse('short_url', args=[recipe.pk])
+        return Response(
+            {"short-link": request.build_absolute_uri(short_link)},
+            status=status.HTTP_200_OK
+        )
 
     @action(
         methods=["post", "delete"],
