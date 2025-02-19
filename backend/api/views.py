@@ -48,7 +48,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path="get-link",
     )
     def get_link(self, request, pk):
-        recipe = get_object_or_404(Recipe, pk=pk)
         short_link = f"{request.get_full_path()}"[:-10]
         return Response({"short-link": short_link}, status=status.HTTP_200_OK)
 
