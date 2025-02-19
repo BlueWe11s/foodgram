@@ -117,7 +117,7 @@ class UsersViewSet(UserViewSet):
     def delete_avatar(self, request):
         user = request.user
         if user.avatar:
-            user.avatar.delete(save=False)
+            user.avatar.delete()
             user.avatar = None
             user.save()
             return Response(
