@@ -5,13 +5,10 @@ from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from user.models import Follow
 from api.serializers import SubscribeSerializer, SubscribingSerializer
+from user.models import Follow
 from user.paginations import Pagination
-from user.serializers import (
-    UserAvatarSerializer,
-    UserSerializer,
-)
+from user.serializers import UserAvatarSerializer, UserSerializer
 
 User = get_user_model()
 

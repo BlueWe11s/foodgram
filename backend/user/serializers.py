@@ -1,12 +1,12 @@
+import re
+
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from djoser.serializers import UserSerializer as DjoserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-import re
 
-from django.core.exceptions import ValidationError
 from user.models import Follow
-
 
 User = get_user_model()
 
