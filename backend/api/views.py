@@ -33,17 +33,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=("get",),
+        methods=('get',),
         permission_classes=(AllowAny,),
-        url_path="get-link",
+        url_path='get-link',
     )
     def get_link(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
-        short_link = reverse('short_url', args=[recipe.pk])
-        return Response(
-            {"short-link": request.build_absolute_uri(short_link)},
-            status=status.HTTP_200_OK
-        )
+        short_link = f'{request.get_full_path()}'[:-10]
+        return Response({'short-link': short_link}, status=status.HTTP_200_OK)
 
     @action(
         methods=["post", "delete"],
