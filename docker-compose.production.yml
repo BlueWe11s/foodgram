@@ -1,38 +1,43 @@
----
-version: '3.3'
 volumes:
-  media: null
-  pg_data: null
-  static: null
+  pg_data_production:
+  static_volume:
+  media_volume:
+  redoc_volume:
+
 services:
   db:
     image: postgres:13.10
     env_file: .env
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pg_data_production:/var/lib/postgresql/data/
+
   backend:
-    image: bluewe11s/foodgram_backend
+    image: katystred/foodgram_backend
     env_file: .env
     depends_on:
       - db
     volumes:
-      - static:/backend_static
-      - media:/app/media
-    command: ["gunicorn", "--bind", "0.0.0.0:7070", "foodgram_backend.wsgi"] 
+      - static_volume:/backend_static
+      - media_volume:/app/media/
+      - redoc_volume:/app/api/docs/
+
   frontend:
-    image: bluewe11s/foodgram_frontend
+    image: katystred/foodgram_frontend
     env_file: .env
-    command: cp -r /app/build/. /frontend_static/
     volumes:
-      - static:/frontend_static
+      - static_volume:/frontend_static
+    command: cp -r /app/build/. /frontend_static/
+
   gateway:
-    image: bluewe11s/foodgram_gateway
+    image: katystred/foodgram_gateway
     env_file: .env
     depends_on:
-      - backend
       - frontend
-    volumes:
-      - static:/staticfiles
-      - media:/media
+      - backend
+      - db
     ports:
-      - 7070:80
+      - 9090:80
+    volumes:
+      - redoc_volume:/usr/share/nginx/html/api/docs/
+      - static_volume:/staticfiles/
+      - media_volume:/app/media/
