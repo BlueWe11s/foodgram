@@ -6,26 +6,10 @@ volumes:
 
 services:
   db:
-     image: 'postgres'
-     ports:
-       - '5432'
-     environment:
-            - POSTGRES_DB=booksdb
-            - POSTGRES_USER=postgres
-            - POSTGRES_PASSWORD=postgres
-  core:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: python3 manage.py runserver 0.0.0.0:8000
-    ports:
-      - '8000:8000'
+    image: postgres:13.10
+    env_file: .env
     volumes:
-      - .:/code
-    depends_on:
-      - db
-    links:
-      - db:db
+      - pg_data_production:/var/lib/postgresql/data/
 
   backend:
     image: katystred/foodgram_backend
