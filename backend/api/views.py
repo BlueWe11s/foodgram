@@ -56,7 +56,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             pk=pk,
             model=FavoriteRecipe,
             serializer_class=FavouriteSerializer,
-            already_exists_message="{} уже в избранном.",
+            message="{} уже в избранном.",
         )
 
     @action(
@@ -72,7 +72,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             pk=pk,
             model=ShoppingCart,
             serializer_class=ShoppingCartSerializer,
-            already_exists_message="{} уже добавлен",
+            message="{} уже добавлен",
         )
 
     def action_with_favoutite_and_shop(
@@ -81,7 +81,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         pk,
         model,
         serializer_class,
-        already_exists_message,
+        message,
     ):
         """Добавляет/удаляет рецепты в избранное или корзину пользователя."""
         user = request.user
@@ -89,7 +89,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe = get_object_or_404(Recipe, id=pk)
             if model.objects.filter(recipe=recipe, user=user).exists():
                 return Response(
-                    {"detail": already_exists_message.format(recipe.name)},
+                    {"detail": message.format(recipe.name)},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             serializer = serializer_class(
