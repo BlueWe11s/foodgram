@@ -26,8 +26,7 @@ class UsersViewSet(UserViewSet):
         permission_classes=[permissions.IsAuthenticated],
     )
     def get_me(self, request):
-        user_me = get_object_or_404(User, id=request.user.id)
-        serializer = UserSerializer(user_me)
+        serializer = UserSerializer(request.user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(
