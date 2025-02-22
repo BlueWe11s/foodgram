@@ -6,7 +6,6 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-from rest_framework.reverse import reverse
 
 from api.filters import RecipeFilter
 from api.serializers import (FavouriteSerializer, IngredientsSerializer,
@@ -38,7 +37,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         url_path='get-link',
     )
     def get_link(self, request, pk):
-        recipe = get_object_or_404(Recipe, pk=pk)
         short_link = f'{request.get_full_path()}'[:-10]
         return Response({'short-link': short_link}, status=status.HTTP_200_OK)
 
