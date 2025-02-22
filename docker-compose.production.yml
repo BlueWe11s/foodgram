@@ -40,4 +40,4 @@ services:
     volumes:
       - redoc_volume:/usr/share/nginx/html/api/docs
       - static_volume:/staticfiles
-      - media_volume:/app/media
+      - media_volume:/media
