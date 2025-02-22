@@ -9,7 +9,7 @@ services:
     image: postgres:13.10
     env_file: .env
     volumes:
-      - pg_data_production:/var/lib/postgresql/data/
+      - pg_data_production:/var/lib/postgresql/data
 
   backend:
     image: bluewe11s/foodgram_backend
@@ -18,15 +18,15 @@ services:
       - db
     volumes:
       - static_volume:/backend_static
-      - media_volume:/app/media/
-      - redoc_volume:/app/api/docs/
+      - media_volume:/app/media
+      - redoc_volume:/app/api/docs
 
   frontend:
     image: bluewe11s/foodgram_frontend
     env_file: .env
     volumes:
       - static_volume:/frontend_static
-    command: cp -r /app/build/. /frontend_static/
+    command: cp -r /app/build/. /frontend_static
 
   gateway:
     image: bluewe11s/foodgram_gateway
@@ -38,6 +38,6 @@ services:
     ports:
       - 9090:80
     volumes:
-      - redoc_volume:/usr/share/nginx/html/api/docs/
-      - static_volume:/staticfiles/
-      - media_volume:/app/media/
+      - redoc_volume:/usr/share/nginx/html/api/docs
+      - static_volume:/staticfiles
+      - media_volume:/app/media
