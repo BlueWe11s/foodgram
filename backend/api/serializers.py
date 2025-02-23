@@ -14,8 +14,6 @@ from api.serializers import UserSerializer
 User = get_user_model()
 
 
-from user.models import Follow
-
 class UserSerializer(DjoserSerializer):
     """
     Сериализатор для пользователя
@@ -75,7 +73,6 @@ class UserAvatarSerializer(serializers.Serializer):
     class Meta:
         model = User
         fields = ("avatar",)
-
 
 
 class TagsSerializer(serializers.ModelSerializer):
