@@ -24,7 +24,7 @@ from recipes.models import (
     ShoppingCart,
     Tags
 )
-from recipes.permissions import IsAuthor
+from api.recipes.permissions import IsAuthor
 from api.user.paginations import Pagination
 
 
