@@ -6,7 +6,7 @@ from djoser.serializers import UserSerializer as DjoserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from api.recipes.serializers import CartsSerializer
+from recipes.models import Recipe
 from user.models import Follow
 
 User = get_user_model()
@@ -146,3 +146,20 @@ class SubscribeSerializer(serializers.ModelSerializer):
             instance.author,
             context=self.context,
         ).data
+
+
+class CartsSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор избранного и корзины
+    """
+
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = (
+            "id",
+            "name",
+            "image",
+            "cooking_time",
+        )

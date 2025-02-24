@@ -10,7 +10,7 @@ from recipes.models import (
     ShoppingCart,
     Tags
 )
-from api.user.serializers import UserSerializer
+from api.user.serializers import UserSerializer, CartsSerializer
 
 User = get_user_model()
 
@@ -273,20 +273,3 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
         return CartsSerializer(
             instance.recipe, context={"request": self.context.get("request")}
         ).data
-
-
-class CartsSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор избранного и корзины
-    """
-
-    image = Base64ImageField()
-
-    class Meta:
-        model = Recipe
-        fields = (
-            "id",
-            "name",
-            "image",
-            "cooking_time",
-        )
