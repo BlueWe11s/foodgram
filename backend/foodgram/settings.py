@@ -132,7 +132,7 @@ DJOSER = {
     },
     'HIDE_USERS': False,
     'SERIALIZERS': {
-        "user": "api.serializers.UserSerializer",
-        "current_user": "api.serializers.UserSerializer",
+        "user": "api.users.serializers.UserSerializer",
+        "current_user": "api.users.serializers.UserSerializer",
     },
 }
