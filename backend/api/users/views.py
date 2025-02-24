@@ -6,8 +6,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from user.models import Follow
-from api.user.paginations import Pagination
-from api.user.serializers import (
+from api.users.paginations import Pagination
+from api.users.serializers import (
     UserAvatarSerializer,
     UserSerializer,
     SubscribeSerializer,

@@ -10,7 +10,7 @@ from recipes.models import (
     ShoppingCart,
     Tags
 )
-from api.user.serializers import UserSerializer, CartsSerializer
+from api.users.serializers import UserSerializer, CartsSerializer
 
 User = get_user_model()
 
