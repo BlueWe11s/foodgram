@@ -25,7 +25,7 @@ from recipes.models import (
     Tags
 )
 from recipes.permissions import IsAuthor
-from user.views import Pagination
+from api.user.paginations import Pagination
 
 
 class RecipeViewSet(viewsets.ModelViewSet):

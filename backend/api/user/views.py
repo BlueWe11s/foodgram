@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from user.models import Follow
 from api.user.paginations import Pagination
-from user.serializers import (
+from api.user.serializers import (
     UserAvatarSerializer,
     UserSerializer,
     SubscribeSerializer,
