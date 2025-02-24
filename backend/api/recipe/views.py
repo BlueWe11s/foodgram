@@ -7,8 +7,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from backend.api.recipe.filters import RecipeFilter
-from backend.api.recipe.serializers import (
+from api.recipe.filters import RecipeFilter
+from api.recipe.serializers import (
     FavouriteSerializer,
     IngredientsSerializer,
     RecipeReadSerializer,
@@ -24,8 +24,8 @@ from recipes.models import (
     ShoppingCart,
     Tags
 )
-from backend.api.recipe.permissions import IsAuthor
-from backend.api.users.paginations import Pagination
+from api.recipe.permissions import IsAuthor
+from api.users.paginations import Pagination
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
