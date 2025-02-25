@@ -1,5 +1,3 @@
-import re
-
 from django.contrib.auth import get_user_model
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
@@ -37,7 +35,7 @@ class UserSerializer(DjoserSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get("request")
-        return Follow.objects.filter( 
+        return Follow.objects.filter(
             user=request.user.id, author=obj.id
         ).exists()
 
@@ -51,7 +49,7 @@ class UserAvatarSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
         if not validated_data.get("avatar"):
-            raise serializers.ValidationError("Поле пусто")
+            raise ValidationError("Поле пусто")
         instance.avatar = validated_data.get("avatar")
         instance.save()
         return instance
@@ -86,9 +84,9 @@ class SubscribingSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
     def get_is_subscribed(self, obj):
-        request = self.context.get("request") 
-        return Follow.objects.filter( 
-            user=request.user.id, author=obj.id 
+        request = self.context.get("request")
+        return Follow.objects.filter(
+            user=request.user.id, author=obj.id
         ).exists()
 
     def get_recipes(self, obj):
@@ -123,11 +121,11 @@ class SubscribeSerializer(serializers.ModelSerializer):
         user = data["user"]
         author = data["author"]
         if user == author:
-            raise serializers.ValidationError(
+            raise ValidationError(
                 "Вы не можете подписаться на себя"
             )
         if Follow.objects.filter(user=user, author=author).exists():
-            raise serializers.ValidationError("Вы уже подписаны")
+            raise ValidationError("Вы уже подписаны")
         return data
 
     def to_representation(self, instance):
