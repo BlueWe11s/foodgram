@@ -1,6 +1,6 @@
 from django_filters import rest_framework as filters
 
-from recipes.models import Tags, User
+from recipes.models import Tags, User, Ingredient
 
 
 class RecipeFilter(filters.FilterSet):
@@ -31,3 +31,15 @@ class RecipeFilter(filters.FilterSet):
                 shopping_carts__user_id=self.request.user.id
             )
         return queryset
+
+
+class IngredientFilter(filters.FilterSet):
+    """
+    Фильтр для ингредиентов
+    """
+
+    name = filters.CharFilter(lookup_expr='istartswith')
+
+    class Meta:
+        model = Ingredient
+        fields = ['name']
