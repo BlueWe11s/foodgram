@@ -36,9 +36,8 @@ class UserSerializer(DjoserSerializer):
         read_only_fields = ("id",)
 
     def get_is_subscribed(self, obj):
-        request = self.context.get("request")
-        return Follow.objects.filter( 
-            user=request.user.id, author=obj.id
+        return obj.followings.filter(
+            user=self.context['request'].user
         ).exists()
 
 
@@ -125,9 +124,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "Вы не можете подписаться на себя"
             )
-        if user.followings.filter(
-            author=author
-        ).exists():
+        if Follow.objects.filter(user=user, author=author).exists():
             raise serializers.ValidationError("Вы уже подписаны")
         return data
 
