@@ -43,7 +43,9 @@ class UsersViewSet(UserViewSet):
     def get_subscribe(self, request):
         """Получить список подписок пользователя."""
         user = request.user
-        subscriptions = Follow.objects.filter(user=user)
+        subscriptions = self.followings.filter(
+            user=user
+        ).exists()
         authors = [subscription.author for subscription in subscriptions]
         pages = self.paginate_queryset(authors)
         serializer = SubscribingSerializer(
@@ -119,14 +121,14 @@ class UsersViewSet(UserViewSet):
     @get_avatar.mapping.delete
     def delete_avatar(self, request):
         user = request.user
-        if user.avatar:
-            user.avatar.delete()
-            user.avatar = None
-            user.save()
+        if not user.avatar:
             return Response(
-                {"status": "Аватар удален."}, status=status.HTTP_204_NO_CONTENT
+                {"errors": "Такого объекта не существует."},
+                status=status.HTTP_404_NOT_FOUND,
             )
+        user.avatar.delete()
+        user.avatar = None
+        user.save()
         return Response(
-            {"errors": "Такого объекта не существует."},
-            status=status.HTTP_404_NOT_FOUND,
+            {"status": "Аватар удален."}, status=status.HTTP_204_NO_CONTENT
         )

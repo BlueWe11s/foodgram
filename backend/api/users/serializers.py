@@ -1,13 +1,14 @@
 import re
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from djoser.serializers import UserSerializer as DjoserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from recipes.models import Recipe
 from user.models import Follow
+from api.serializers import CartsSerializer
 
 User = get_user_model()
 
@@ -18,6 +19,8 @@ class UserSerializer(DjoserSerializer):
     """
 
     is_subscribed = serializers.SerializerMethodField(default=False)
+
+    username_validator = UnicodeUsernameValidator()
 
     class Meta(DjoserSerializer.Meta):
         model = User
@@ -32,25 +35,9 @@ class UserSerializer(DjoserSerializer):
         )
         read_only_fields = ("id",)
 
-    def validate_username(value):
-        pattern = r"^[\w.@+-]+\Z"
-        if value == "me":
-            raise ValidationError(
-                "Вы не можете выбрать никнейм 'me', "
-                "выберите другой никнейм."
-            )
-        if not re.match(pattern, value):
-            invalid_chars = re.sub(pattern, "", value)
-            raise ValidationError(
-                f"Введите корректный юзернейм."
-                f"Эти символы недопустимы: {invalid_chars}"
-            )
-        return value
-
     def get_is_subscribed(self, obj):
-        request = self.context.get("request")
-        return Follow.objects.filter(
-            user=request.user.id, author=obj.id
+        return obj.followings.filter(
+            user=self.context['request'].user
         ).exists()
 
 
@@ -98,8 +85,8 @@ class SubscribingSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
     def get_is_subscribed(self, obj):
-        return Follow.objects.filter(
-            user=self.context["request"].user, author=obj
+        return obj.followings.filter(
+            user=self.context['request'].user
         ).exists()
 
     def get_recipes(self, obj):
@@ -146,20 +133,3 @@ class SubscribeSerializer(serializers.ModelSerializer):
             instance.author,
             context=self.context,
         ).data
-
-
-class CartsSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор избранного и корзины
-    """
-
-    image = Base64ImageField()
-
-    class Meta:
-        model = Recipe
-        fields = (
-            "id",
-            "name",
-            "image",
-            "cooking_time",
-        )
