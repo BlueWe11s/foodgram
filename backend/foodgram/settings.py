@@ -127,12 +127,12 @@ SENDER_EMAIL = 'from@example.com'
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'PERMISSIONS': {
-        'user': ['rest_framework.permissions.AllowAny'],
+        'users': ['rest_framework.permissions.AllowAny'],
         'user_list': ['rest_framework.permissions.AllowAny'],
     },
     'HIDE_USERS': False,
     'SERIALIZERS': {
-        "user": "api.users.serializers.UserSerializer",
+        "users": "api.users.serializers.UserSerializer",
         "current_user": "api.users.serializers.UserSerializer",
     },
 }
