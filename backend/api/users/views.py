@@ -42,6 +42,7 @@ class UsersViewSet(UserViewSet):
     )
     def get_subscribe(self, request):
         """Получить список подписок пользователя."""
+        request = self.context.get("request") 
         subscriptions = request.user.followings.select_related('author')
         authors = [subscription.author for subscription in subscriptions]
         pages = self.paginate_queryset(authors)
