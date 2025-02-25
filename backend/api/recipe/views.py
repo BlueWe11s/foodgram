@@ -54,7 +54,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
     @action(
-        methods=["post", "delete"],
+        methods=["post",],
         detail=True,
         permission_classes=[permissions.IsAuthenticated],
         url_path="favorite",
@@ -70,8 +70,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
             message="{} уже в избранном.",
         )
 
+    @favourite.mapping.delete
+    def delete_favourite(self, request, pk):
+        return self.delete_fovourite_and_shop(
+            request=request,
+            pk=pk,
+            model=FavoriteRecipe,
+        )
+
     @action(
-        methods=["post", "delete"],
+        methods=["post",],
         detail=True,
         permission_classes=[permissions.IsAuthenticated],
         url_path="shopping_cart",
@@ -86,6 +94,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
             message="{} уже добавлен",
         )
 
+    @shopping_cart.mapping.delete
+    def delete_shopping_cart(self, request, pk):
+        return self.delete_fovourite_and_shop(
+            request=request,
+            pk=pk,
+            model=ShoppingCart,
+        )
+
     def action_with_favoutite_and_shop(
         self,
         request,
@@ -96,35 +112,40 @@ class RecipeViewSet(viewsets.ModelViewSet):
     ):
         """Добавляет/удаляет рецепты в избранное или корзину пользователя."""
         user = request.user
-        if request.method == "POST":
-            recipe = get_object_or_404(Recipe, id=pk)
-            if model.objects.filter(recipe=recipe, user=user).exists():
-                return Response(
-                    {"detail": message.format(recipe.name)},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-            serializer = serializer_class(
-                data={"recipe": recipe.id, "user": user.id},
-                context={"request": request},
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif request.method == "DELETE":
-            deleted_count, _ = model.objects.filter(
-                recipe__id=pk, user=user
-            ).delete()
-            if deleted_count:
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            if not Recipe.objects.filter(id=pk).exists():
-                return Response(
-                    {"detail": "Рецепта не существует"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
+        recipe = get_object_or_404(Recipe, id=pk)
+        if model.objects.filter(recipe=recipe, user=user).exists():
             return Response(
-                {"detail": "Рецепта нет в списке"},
+                {"detail": message.format(recipe.name)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        serializer = serializer_class(
+            data={"recipe": recipe.id, "user": user.id},
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def delete_fovourite_and_shop(
+        self,
+        request,
+        pk,
+        model,
+    ):
+        deleted_count, _ = model.objects.filter(
+            recipe__id=pk, user=request.user
+        ).delete()
+        if deleted_count:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        if not Recipe.objects.filter(id=pk).exists():
+            return Response(
+                {"detail": "Рецепта не существует"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(
+            {"detail": "Рецепта нет в списке"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     @action(
         detail=False,
