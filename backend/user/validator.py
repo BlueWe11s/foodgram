@@ -2,7 +2,7 @@ import re
 
 from django.core.exceptions import ValidationError
 
-pattern = r"^[\w.@+-]+\Z"
+PATTERN = r"^[\w.@+-]+\Z"
 
 
 def validate_username(value):
@@ -13,8 +13,8 @@ def validate_username(value):
         raise ValidationError(
             "Вы не можете выбрать никнейм 'me', " "выберите другой никнейм."
         )
-    if not re.match(pattern, value):
-        invalid_chars = re.sub(pattern, "", value)
+    if not re.match(PATTERN, value):
+        invalid_chars = re.sub(PATTERN, "", value)
         raise ValidationError(
             f"Введите корректный юзернейм."
             f"Эти символы недопустимы: {invalid_chars}"
