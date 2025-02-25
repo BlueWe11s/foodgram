@@ -126,7 +126,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
                 "Вы не можете подписаться на себя"
             )
         if user.followings.filter(
-            user=user.id, author=author.id
+            user=user, author=author
         ).exists():
             raise serializers.ValidationError("Вы уже подписаны")
         return data
