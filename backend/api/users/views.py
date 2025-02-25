@@ -42,10 +42,12 @@ class UsersViewSet(UserViewSet):
     )
     def get_subscribe(self, request):
         """Получить список подписок пользователя."""
-        subscriptions = request.user.followings.select_related('author')
-        pages = self.paginate_queryset(subscriptions)
+        user = request.user
+        subscriptions = user.followings.filter(user=user)
+        authors = [subscription.author for subscription in subscriptions]
+        pages = self.paginate_queryset(authors)
         serializer = SubscribingSerializer(
-            pages, many=True, context={"request": request}
+            pages, many=True, context={'request': request}
         )
         return self.get_paginated_response(serializer.data)
 
