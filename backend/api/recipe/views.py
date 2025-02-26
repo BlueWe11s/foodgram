@@ -54,7 +54,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
     @action(
-        methods=["post",],
+        methods=["post"],
         detail=True,
         permission_classes=[permissions.IsAuthenticated],
         url_path="favorite",
@@ -79,7 +79,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
     @action(
-        methods=["post",],
+        methods=["post"],
         detail=True,
         permission_classes=[permissions.IsAuthenticated],
         url_path="shopping_cart",
