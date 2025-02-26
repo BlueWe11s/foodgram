@@ -35,7 +35,9 @@ class UserSerializer(DjoserSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get("request")
-        return request.user.follower.filter(author=obj).exists()
+        return Follow.objects.filter( 
+            user=request.user.id, author=obj.id
+        ).exists()
 
 
 class UserAvatarSerializer(serializers.Serializer):
@@ -83,7 +85,9 @@ class SubscribingSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get("request")
-        return request.user.follower.filter(author=obj).exists()
+        return Follow.objects.filter( 
+            user=request.user.id, author=obj.id
+        ).exists()
 
     def get_recipes(self, obj):
         request = self.context["request"]
