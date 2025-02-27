@@ -3,6 +3,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 
 from user.constants import EMAIL_LENGTH, SLUG_LENGTH
+from user.validator import validate_username
 
 
 class Users(AbstractUser):
@@ -31,7 +32,7 @@ class Users(AbstractUser):
         "Логин",
         max_length=SLUG_LENGTH,
         unique=True,
-        validators=(UnicodeUsernameValidator(),),
+        validators=(validate_username, UnicodeUsernameValidator()),
     )
     email = models.EmailField(
         "Почта",
