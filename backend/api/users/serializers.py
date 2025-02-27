@@ -39,7 +39,9 @@ class UserSerializer(DjoserSerializer):
             return self.context.get("request").user.follower.filter(
                     author=obj).exists()
         else:
-            False
+            Follow.objects.filter(
+                user=self.context.get('request').user.id,
+                author=obj).exists()
 
 
 class UserAvatarSerializer(serializers.Serializer):
