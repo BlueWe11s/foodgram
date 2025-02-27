@@ -35,8 +35,11 @@ class UserSerializer(DjoserSerializer):
         read_only_fields = ("id",)
 
     def get_is_subscribed(self, obj):
-        return self.context.get("request").user.follower.filter(
-                author=obj).exists()
+        if self.context.get('request').user.is_authenticated:
+            return self.context.get("request").user.follower.filter(
+                    author=obj).exists()
+        else:
+            False
 
 
 class UserAvatarSerializer(serializers.Serializer):
