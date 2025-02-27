@@ -18,7 +18,7 @@ class UserSerializer(DjoserSerializer):
 
     is_subscribed = serializers.SerializerMethodField(default=False)
 
-    username_validator = validate_username()
+    username_validator = validate_username
 
     class Meta(DjoserSerializer.Meta):
         model = User
