@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from djoser.serializers import UserSerializer as DjoserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
 from user.models import Follow
+from user.validator import validate_username
 from api.serializers import CartsSerializer
 
 User = get_user_model()
@@ -18,7 +18,7 @@ class UserSerializer(DjoserSerializer):
 
     is_subscribed = serializers.SerializerMethodField(default=False)
 
-    username_validator = UnicodeUsernameValidator()
+    username_validator = validate_username()
 
     class Meta(DjoserSerializer.Meta):
         model = User
@@ -34,10 +34,11 @@ class UserSerializer(DjoserSerializer):
         read_only_fields = ("id",)
 
     def get_is_subscribed(self, obj):
-        request = self.context.get("request")
-        return Follow.objects.filter(
-            user=request.user.id, author=obj.id
-        ).exists()
+        if self.context.get("request").user.is_authenticated:
+            return self.context.get("request").user.follower.filter(
+                author=obj).exists()
+        else:
+            return False
 
 
 class UserAvatarSerializer(serializers.Serializer):
@@ -85,6 +86,8 @@ class SubscribingSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         request = self.context.get("request")
+        if request.user.is_authenticated:
+            return request.user.follower.filter(author=obj).exists()
         return Follow.objects.filter(
             user=request.user.id, author=obj.id
         ).exists()
