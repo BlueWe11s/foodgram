@@ -50,6 +50,8 @@ sudo nginx -t
 перезагрузить конфигурацию
 sudo service nginx reload
 
+### Проект
+- [Foodgram](https://bboi.hopto.org)
 
 ### Авторы
 - [Юрий Крылов](https://github.com/BlueWe11s)
