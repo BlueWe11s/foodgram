@@ -38,11 +38,9 @@ class UserSerializer(DjoserSerializer):
         request = self.context.get("request")
         if request.user.is_authenticated:
             return request.user.follower.filter(
-                    author=obj).exists()
-        else:
-            Follow.objects.filter(
-                user=request.user.id,
                 author=obj).exists()
+        else:
+            False
 
 
 class UserAvatarSerializer(serializers.Serializer):
@@ -89,10 +87,13 @@ class SubscribingSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
     def get_is_subscribed(self, obj):
-        request = self.context.get("request") 
-        return Follow.objects.filter( 
-            user=request.user.id, author=obj.id 
-        ).exists()
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            return Follow.objects.filter( 
+                user=request.user.id, author=obj.id
+            ).exists()
+        else:
+            False
 
     def get_recipes(self, obj):
         request = self.context["request"]
