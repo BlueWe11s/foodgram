@@ -2,7 +2,7 @@ import json
 
 from django.contrib.auth import get_user_model
 
-from backend.recipes.models import Ingredient, Tags
+from recipes.models import Ingredient, Tags
 
 
 User = get_user_model()
