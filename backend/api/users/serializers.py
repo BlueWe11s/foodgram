@@ -38,8 +38,7 @@ class UserSerializer(DjoserSerializer):
         request = self.context.get("request")
         if request and request.user.is_authenticated:
             return request.user.follower.filter(author=obj).exists()
-        else:
-            return False
+        return False
 
 
 class UserAvatarSerializer(serializers.Serializer):

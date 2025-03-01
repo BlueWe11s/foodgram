@@ -2,7 +2,7 @@ import json
 
 from django.contrib.auth import get_user_model
 
-from recipe.models import Ingredient, Tag
+from backend.recipes.models import Ingredient, Tags
 
 
 User = get_user_model()
@@ -18,12 +18,12 @@ ingredients = [Ingredient(
     name=item['name'], measurement_unit=item['measurement_unit']
 ) for item in ingredients_json]
 
-tags = [Tag(
+tags = [Tags(
     name=item['name'], slug=item['slug']
 ) for item in tags_json]
 
 Ingredient.objects.bulk_create(ingredients)
-Tag.objects.bulk_create(tags)
+Tags.objects.bulk_create(tags)
 admin = User.objects.create(username='admin', email='admin@a.ru',
                             is_staff=True, is_superuser=True)
 admin.set_password('admin')
