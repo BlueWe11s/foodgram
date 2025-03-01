@@ -41,6 +41,7 @@ class UserSerializer(DjoserSerializer):
         else:
             return False
 
+
 class UserAvatarSerializer(serializers.Serializer):
     """
     Сериализатор аватара польтзователя
